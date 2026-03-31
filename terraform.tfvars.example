@@ -1,0 +1,164 @@
+# ─── vCenter Connection ───────────────────────────────────────────────────────
+vsphere_server = "vcenter.corp.example.com"
+vsphere_user   = "administrator@vsphere.local"
+# vsphere_password = set via TF_VAR_vsphere_password
+
+# ─── Infrastructure Placement ─────────────────────────────────────────────────
+datacenter = "MYDC01"
+cluster    = "MYCLU01"
+datastore  = "MYDS01"
+vm_folder  = "VMs/AppServers"
+
+# ─── Templates ────────────────────────────────────────────────────────────────
+template_name_windows = "template-win2k19-ltsc-64bit-datacenter"
+template_name_linux   = "template-ubuntu-22.04-lts"
+
+# ─── VM List ──────────────────────────────────────────────────────────────────
+# Set is_windows = true for Windows VMs, false for Linux VMs.
+# firmware, time_zone, and computer_name defaults are applied automatically per OS.
+# Any field omitted here falls back to the global defaults defined further below.
+vms = {
+
+  # ── Windows VM ───────────────────────────────────────────────────────────────
+
+  # 1. Full Windows override: every option catered for
+  "win-app-01" = {
+    is_windows    = true
+    datacenter    = "MYDC01"
+    cluster       = "MYCLU01"
+    datastore     = "MYDS01"
+    resource_pool = "Resources/AppPool"
+    vm_folder     = "VMs/Production"
+    computer_name = "WIN-APP-01"           # max 15 chars; auto-truncated from VM name if omitted
+    annotation    = "Primary App Server"
+    tags          = { "Environment" = "Prod", "Role" = "App" }
+    template_name = "template-win2019-gold"   # optional: overrides template_name_windows global
+    num_cpus      = 8
+    memory        = 16384
+
+    scsi_controller_count = 2
+    disks = [
+      { label = "OS",   size = 150, unit_number = 0  },
+      { label = "Data", size = 500, unit_number = 16 }  # Bus 1:0
+    ]
+    network_interfaces = [{ network_name = "VM Network" }]
+    ip_settings        = [{ ipv4_address = "10.0.1.101", ipv4_netmask = 24 }]
+    ipv4_gateway       = "10.0.1.1"
+    dns_servers        = ["10.0.0.10"]
+
+    # Per-VM domain join overrides (falls back to global windows_domain* vars if omitted)
+    windows_domain          = "corp.example.com"
+    windows_domain_user     = "svc-domainjoin@corp.example.com"
+    windows_domain_ou       = "OU=AppServers,OU=Servers,DC=corp,DC=example,DC=com"
+    windows_run_once        = ["powershell.exe -Command \"Install-WindowsFeature Web-Server\""]
+    time_zone_windows       = 260   # 260 = Brisbane; omit to use global time_zone_windows
+    # firmware defaults to "efi" for Windows — override only if you need "bios"
+  }
+
+  # 2. Typical Windows VM: just the common specs, everything else from globals
+  "win-app-02" = {
+    is_windows = true
+    num_cpus   = 4
+    memory     = 8192
+    disks = [
+      { label = "OS",   size = 150 },
+      { label = "Data", size = 50  }
+    ]
+    ip_settings  = [{ ipv4_address = "10.0.1.102", ipv4_netmask = 24 }]
+    ipv4_gateway = "10.0.1.1"
+    # template_name inherits from template_name_windows global
+  }
+
+  # ── Linux VM ─────────────────────────────────────────────────────────────────
+
+  # 3. Full Linux override: every option catered for
+  "lnx-app-01" = {
+    is_windows    = false
+    datacenter    = "MYDC01"
+    cluster       = "MYCLU01"
+    resource_pool = "Resources/LinuxPool"
+    vm_folder     = "VMs/Production/Linux"
+    annotation    = "High Performance Linux App Server"
+    tags          = { "Environment" = "Prod", "OS" = "Ubuntu" }
+    template_name = "template-ubuntu-24.04-lts"   # optional: overrides template_name_linux global
+    num_cpus      = 8
+    memory        = 16384
+
+    scsi_controller_count = 2
+    disks = [
+      { label = "OS",   size = 150, unit_number = 0  },
+      { label = "Data", size = 200, unit_number = 16 }  # Bus 1:0
+    ]
+    network_interfaces = [{ network_name = "VM Network" }]
+    ip_settings        = [{ ipv4_address = "10.0.2.101", ipv4_netmask = 24 }]
+    ipv4_gateway       = "10.0.2.1"
+
+    time_zone_linux = "Australia/Brisbane"  # omit to use global time_zone_linux
+    # firmware defaults to "bios" for Linux — override only if you need "efi"
+
+    # Optional: additional script that runs AFTER the domain join (when domain join is enabled)
+    linux_script_text = <<-EOT
+      cat /etc/os-release
+    EOT
+  }
+
+  # 4. Typical Linux VM: just common specs, everything else from globals
+  "lnx-app-02" = {
+    is_windows    = false
+    num_cpus      = 4
+    memory        = 8192
+    disks         = [{ label = "OS", size = 150 }, { label = "Data", size = 50 }]
+    ip_settings  = [{ ipv4_address = "10.0.2.102", ipv4_netmask = 24 }]
+    ipv4_gateway = "10.0.2.1"
+    # template_name inherits from template_name_linux global
+  }
+
+  # 5. Minimal VM: inherits all global defaults
+  "lnx-app-03" = {
+    is_windows = false
+    # template_name inherits from template_name_linux global
+  }
+}
+
+# ─── Global Defaults ──────────────────────────────────────────────────────────
+# Applied to any VM that does not specify its own value in the vms map above.
+# firmware, time_zone, and computer_name are set per-OS automatically — no need to set them here.
+
+num_cpus = 2
+memory   = 4096   # Windows VMs should override this to 8192+ in the vms map
+
+disks = [
+  {
+    label       = "disk0"
+    size        = 60
+    unit_number = 0
+  }
+]
+
+network_interfaces = [
+  { network_name = "NET01" }
+]
+
+dns_servers     = ["10.0.0.1", "10.0.0.2"]
+dns_suffix_list = ["corp.example.com"]
+
+domain           = "corp.example.com"
+time_zone_linux  = "Australia/Brisbane"
+time_zone_windows = 260
+
+# ─── Global Hardware Defaults ─────────────────────────────────────────────────
+hardware_version     = 21
+tools_upgrade_policy = "upgradeAtPowerCycle"
+
+# ─── Domain Join ──────────────────────────────────────────────────────────────
+# Drives domain join for ALL VMs (Windows via Sysprep, Linux via realm join script).
+# Remove or null-out windows_domain to deploy workgroup/standalone VMs.
+
+windows_domain         = "corp.example.com"
+windows_domain_netbios = "CORP"                               # Linux realm join only
+windows_domain_user    = "svc-domainjoin@corp.example.com"
+# windows_domain_password = set via TF_VAR_windows_domain_password
+windows_domain_ou = "OU=AppServers,OU=Servers,DC=corp,DC=example,DC=com"
+
+# ─── Windows Credentials ──────────────────────────────────────────────────────
+# windows_admin_password = set via TF_VAR_windows_admin_password
