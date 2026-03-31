@@ -3,11 +3,11 @@ locals {
   # Null-safe intermediates — prevents interpolation errors when domain join is
   # disabled (vars are null). The heredoc must always be syntactically valid
   # because terraform evaluates all locals regardless of the condition below.
-  _dj_domain   = coalesce(var.windows_domain, "")
-  _dj_password = coalesce(var.windows_domain_password, "")
+  _dj_domain   = try(coalesce(var.windows_domain, ""), "")
+  _dj_password = try(coalesce(var.windows_domain_password, ""), "")
   _dj_netbios  = try(coalesce(var.windows_domain_netbios, var.windows_domain), "")
-  _dj_user     = coalesce(var.windows_domain_user, "")
-  _dj_ou       = coalesce(var.windows_domain_ou, "")
+  _dj_user     = try(coalesce(var.windows_domain_user, ""), "")
+  _dj_ou       = try(coalesce(var.windows_domain_ou, ""), "")
 
   _domain_join_script_content = <<-EOT
     #!/bin/bash
@@ -155,7 +155,7 @@ check "linux_domain_join_requires_password" {
 
 module "vm" {
   for_each = var.vms
-  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.9"
+  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.10"
 
   # Infrastructure placement
   datacenter    = coalesce(each.value.datacenter, var.datacenter)
