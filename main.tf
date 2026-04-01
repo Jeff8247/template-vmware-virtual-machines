@@ -100,8 +100,8 @@ locals {
   # ─── Per-VM OS-Conditional Defaults ──────────────────────────────────────────
   vms_resolved = {
     for k, v in var.vms : k => {
-      # firmware: efi for Windows, bios for Linux (overridden by per-VM or global firmware if set)
-      firmware = v.firmware != null ? v.firmware : coalesce(var.firmware, v.is_windows ? "efi" : "bios")
+      # firmware: efi for both Windows and Linux (overridden by per-VM or global firmware if set)
+      firmware = v.firmware != null ? v.firmware : coalesce(var.firmware, "efi")
 
       # time_zone: module expects a string; Windows numeric index is converted via tostring()
       time_zone = v.is_windows ? tostring(coalesce(v.time_zone_windows, var.time_zone_windows)) : coalesce(v.time_zone_linux, var.time_zone_linux)
@@ -155,7 +155,7 @@ check "linux_domain_join_requires_password" {
 
 module "vm" {
   for_each = var.vms
-  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.10"
+  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.11"
 
   # Infrastructure placement
   datacenter    = coalesce(each.value.datacenter, var.datacenter)
