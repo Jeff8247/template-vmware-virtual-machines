@@ -63,7 +63,7 @@ variable "vms" {
       label            = string
       size             = number
       unit_number      = optional(number)
-      thin_provisioned = optional(bool, true)
+      thin_provisioned = optional(bool, false)
       eagerly_scrub    = optional(bool, false)
     })))
     scsi_type             = optional(string)
@@ -234,14 +234,14 @@ variable "disks" {
       - size             (number) — size in GB
     Optional per disk:
       - unit_number      (number) — SCSI unit number (disk0 = 0, disk1 = 1, …)
-      - thin_provisioned (bool)   — default true
+      - thin_provisioned (bool)   — default false
       - eagerly_scrub    (bool)   — default false
   EOT
   type = list(object({
     label            = string
     size             = number
     unit_number      = optional(number)
-    thin_provisioned = optional(bool, true)
+    thin_provisioned = optional(bool, false)
     eagerly_scrub    = optional(bool, false)
   }))
   default = [
