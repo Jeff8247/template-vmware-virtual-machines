@@ -348,10 +348,8 @@ variable "linux_script_text" {
 }
 
 # ─── Domain Join ──────────────────────────────────────────────────────────────
-# These variables drive domain join for both OS types from a single set of credentials:
-#   Windows — passed directly to Sysprep via the module's windows_domain* inputs.
-#   Linux   — used to generate a realm join script (linux_script_text).
-# To enable domain join: set windows_domain, windows_domain_user, and windows_domain_password.
+# Windows Sysprep domain join — set windows_domain, windows_domain_user, and windows_domain_password.
+# Linux domain join is handled by Ansible post-boot.
 
 variable "windows_domain" {
   description = "Active Directory domain to join (e.g. corp.example.com). Set to null to skip domain join."
@@ -378,11 +376,6 @@ variable "windows_domain_ou" {
   default     = null
 }
 
-variable "windows_domain_netbios" {
-  description = "NetBIOS / short name of the domain (e.g. CORP). Used by the Linux realm join script. Defaults to windows_domain when null."
-  type        = string
-  default     = null
-}
 
 variable "windows_workgroup" {
   description = "Workgroup name for Windows VMs when not domain-joined"

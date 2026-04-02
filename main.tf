@@ -43,7 +43,7 @@ check "windows_computer_name_limit" {
 
 module "vm" {
   for_each = var.vms
-  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.14"
+  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.15"
 
   # Infrastructure placement
   datacenter    = coalesce(each.value.datacenter, var.datacenter)
@@ -97,12 +97,11 @@ module "vm" {
   vbs_enabled              = each.value.is_windows ? (each.value.vbs_enabled != null ? each.value.vbs_enabled : var.vbs_enabled) : false
   efi_secure_boot_enabled  = each.value.is_windows ? (each.value.efi_secure_boot_enabled != null ? each.value.efi_secure_boot_enabled : var.efi_secure_boot_enabled) : false
 
-  # Domain join (used by both Windows Sysprep and Linux realm join)
-  windows_domain          = each.value.windows_domain != null ? each.value.windows_domain : var.windows_domain
-  windows_domain_user     = each.value.windows_domain_user != null ? each.value.windows_domain_user : var.windows_domain_user
-  windows_domain_password = each.value.windows_domain_password != null ? each.value.windows_domain_password : var.windows_domain_password
-  windows_domain_ou       = each.value.windows_domain_ou != null ? each.value.windows_domain_ou : var.windows_domain_ou
-  windows_domain_netbios  = var.windows_domain_netbios
+  # Domain join (Windows Sysprep only)
+  windows_domain          = each.value.is_windows ? (each.value.windows_domain != null ? each.value.windows_domain : var.windows_domain) : null
+  windows_domain_user     = each.value.is_windows ? (each.value.windows_domain_user != null ? each.value.windows_domain_user : var.windows_domain_user) : null
+  windows_domain_password = each.value.is_windows ? (each.value.windows_domain_password != null ? each.value.windows_domain_password : var.windows_domain_password) : null
+  windows_domain_ou       = each.value.is_windows ? (each.value.windows_domain_ou != null ? each.value.windows_domain_ou : var.windows_domain_ou) : null
 
   # Guest OS (Linux-specific — ignored by module when is_windows = true)
   linux_script_text = each.value.is_windows ? null : local.vms_resolved[each.key].linux_script_text
