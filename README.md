@@ -76,7 +76,7 @@ vms = {
 A single set of `windows_domain*` variables drives domain join for **both** OS types:
 
 - **Windows** — credentials are passed directly into Sysprep via the module's `windows_options` block.
-- **Linux** — a `realmd`/`sssd` script is generated and run during guest customization. It installs required packages, joins the domain, configures SSSD and Kerberos, and hardens PAM. The script detects the package manager at runtime and works on both RHEL-family and Debian/Ubuntu guests.
+- **Linux** — the module automatically generates and runs a `realmd`/`sssd` join script during guest customization. The script is idempotent (skips if already joined), retries the join up to 5 times, configures SSSD and Kerberos, and hardens PAM. It targets RHEL-family systems.
 
 ```hcl
 windows_domain         = "corp.example.com"
@@ -370,7 +370,7 @@ default_ip_addresses = {
 
 ```
 .
-├── main.tf                    # Domain join locals, OS-conditional defaults, module call
+├── main.tf                    # OS-conditional defaults, module call
 ├── variables.tf               # All input variables with validation
 ├── outputs.tf                 # Map outputs keyed by VM name
 ├── versions.tf                # Terraform and provider version constraints
