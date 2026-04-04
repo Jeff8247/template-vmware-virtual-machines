@@ -25,6 +25,7 @@ $EDITOR terraform.tfvars
 export TF_VAR_vsphere_password="..."
 export TF_VAR_windows_admin_password="..."
 export TF_VAR_windows_domain_password="..."   # only if joining AD
+export TF_VAR_proxy_url="..."                 # only if a proxy is required for Linux package installs
 
 # 3. Initialize and deploy
 terraform init
@@ -40,6 +41,7 @@ Passwords should **not** be stored in `terraform.tfvars`. Use environment variab
 export TF_VAR_vsphere_password="your-vcenter-password"
 export TF_VAR_windows_admin_password="your-local-admin-password"
 export TF_VAR_windows_domain_password="your-domain-join-password"   # if joining AD
+export TF_VAR_proxy_url="http://proxy.corp.example.com:8080"        # if proxy needed for Linux package installs
 ```
 
 The `.gitignore` in this repo excludes `terraform.tfvars` and `*.auto.tfvars` to prevent accidental commits of credentials.
@@ -319,6 +321,7 @@ Common Linux Olson timezones: `UTC`, `America/New_York`, `America/Chicago`, `Ame
 | `windows_domain_ou` | `string` | `null` | OU distinguished name for the computer object. `null` uses the default Computers container |
 | `windows_domain_netbios` | `string` | `null` | NetBIOS name of the domain (e.g. `CORP`) — Linux realm join only. Falls back to `windows_domain` if null |
 | `windows_workgroup` | `string` | `"WORKGROUP"` | Workgroup name for Windows VMs when not domain-joined |
+| `proxy_url` | `string` | `null` | HTTP/HTTPS proxy URL for the Linux package install step (e.g. `http://proxy.corp.example.com:8080`). Set via `TF_VAR_proxy_url`. Overridden per-VM via `vms[].proxy_url` |
 
 ### Windows-Only
 

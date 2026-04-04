@@ -96,6 +96,7 @@ variable "vms" {
     windows_domain_user      = optional(string)
     windows_domain_password  = optional(string)
     windows_domain_ou        = optional(string)
+    windows_domain_netbios   = optional(string)
     windows_workgroup        = optional(string)
     windows_auto_logon       = optional(bool)
     windows_auto_logon_count = optional(number)
@@ -103,6 +104,7 @@ variable "vms" {
 
     # Guest OS (Linux-only — runs after domain join when domain join is enabled)
     linux_script_text = optional(string)
+    proxy_url         = optional(string)
 
     # Hardware (common)
     firmware                    = optional(string)
@@ -347,9 +349,16 @@ variable "linux_script_text" {
   default     = null
 }
 
+variable "proxy_url" {
+  description = "HTTP/HTTPS proxy URL for package installs during Linux domain join (e.g. http://proxy.corp.example.com:8080). Set via TF_VAR_proxy_url. Overridden per-VM via vms[].proxy_url."
+  type        = string
+  default     = null
+}
+
 # ─── Domain Join ──────────────────────────────────────────────────────────────
-# Windows Sysprep domain join — set windows_domain, windows_domain_user, and windows_domain_password.
-# Linux domain join is handled by Ansible post-boot.
+# Windows: Sysprep-based — set windows_domain, windows_domain_user, and windows_domain_password.
+# Linux: realm/sssd-based via linux_script_text — set windows_domain, windows_domain_user,
+#        windows_domain_password, and optionally windows_domain_netbios / windows_domain_ou.
 
 variable "windows_domain" {
   description = "Active Directory domain to join (e.g. corp.example.com). Set to null to skip domain join."
@@ -376,6 +385,11 @@ variable "windows_domain_ou" {
   default     = null
 }
 
+variable "windows_domain_netbios" {
+  description = "NetBIOS / short name of the domain (e.g. CORP). Used by the Linux realm join script. Defaults to windows_domain when null."
+  type        = string
+  default     = null
+}
 
 variable "windows_workgroup" {
   description = "Workgroup name for Windows VMs when not domain-joined"
