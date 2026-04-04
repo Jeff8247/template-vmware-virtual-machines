@@ -78,7 +78,7 @@ vms = {
 A single set of `windows_domain*` variables drives domain join for **both** OS types:
 
 - **Windows** — credentials are passed directly into Sysprep via the module's `windows_options` block.
-- **Linux** — the module automatically generates and runs a `realmd`/`sssd` join script during guest customization. The script is idempotent (skips if already joined), retries the join up to 5 times, configures SSSD and Kerberos, and hardens PAM. It targets RHEL-family systems.
+- **Linux** — the module automatically generates and runs a `realmd`/`sssd` join script during guest customization. The script is idempotent (skips if already joined), retries the join up to 5 times, configures SSSD and Kerberos, and hardens PAM. It supports both RHEL-family (`dnf`) and Debian/Ubuntu (`apt-get`) guests.
 
 ```hcl
 windows_domain         = "corp.example.com"
@@ -172,7 +172,7 @@ vms = {
   "lnx-web-01" = {
     is_windows        = false
     linux_script_text = <<-EOT
-      apt-get install -y nginx
+      DEBIAN_FRONTEND=noninteractive apt-get install -y nginx
       systemctl enable nginx
     EOT
   }
