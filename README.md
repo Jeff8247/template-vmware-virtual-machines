@@ -78,7 +78,7 @@ vms = {
 A single set of `windows_domain*` variables drives domain join for **both** OS types:
 
 - **Windows** — credentials are passed directly into Sysprep via the module's `windows_options` block.
-- **Linux** — the module automatically generates and runs a `realmd`/`sssd` join script during guest customization. The script is idempotent (skips if already joined), retries the join up to 5 times, configures SSSD and Kerberos, and hardens PAM. It supports both RHEL-family (`dnf`) and Debian/Ubuntu (`apt-get`) guests.
+- **Linux** — the module automatically generates and runs a `realmd`/`sssd` join script during guest customization. The script is idempotent (skips if already joined), retries the join up to 5 times, configures SSSD and Kerberos, and hardens PAM. It targets RHEL-family systems.
 
 ```hcl
 windows_domain         = "corp.example.com"
@@ -96,7 +96,7 @@ Set `windows_domain = null` (or omit it) to deploy standalone/workgroup machines
 
 ```hcl
 template_name_windows = "template-win2k19-ltsc-64bit-datacenter"
-template_name_linux   = "template-ubuntu-22.04-lts"
+template_name_linux   = "template-rhel9-soe"
 
 vms = {
   "win-app-01" = {
@@ -134,7 +134,7 @@ memory   = 8192
 ### Linux-only deployment
 
 ```hcl
-template_name_linux = "template-ubuntu-22.04-lts"
+template_name_linux = "template-rhel9-soe"
 
 vms = {
   "lnx-app-01" = { is_windows = false }
@@ -172,7 +172,7 @@ vms = {
   "lnx-web-01" = {
     is_windows        = false
     linux_script_text = <<-EOT
-      DEBIAN_FRONTEND=noninteractive apt-get install -y nginx
+      dnf install -y nginx
       systemctl enable nginx
     EOT
   }
