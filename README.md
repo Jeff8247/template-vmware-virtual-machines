@@ -25,7 +25,6 @@ $EDITOR terraform.tfvars
 export TF_VAR_vsphere_password="..."
 export TF_VAR_windows_admin_password="..."
 export TF_VAR_windows_domain_password="..."   # only if joining AD
-export TF_VAR_proxy_url="..."                 # only if a proxy is required for Linux package installs
 
 # 3. Initialize and deploy
 terraform init
@@ -41,7 +40,6 @@ Passwords should **not** be stored in `terraform.tfvars`. Use environment variab
 export TF_VAR_vsphere_password="your-vcenter-password"
 export TF_VAR_windows_admin_password="your-local-admin-password"
 export TF_VAR_windows_domain_password="your-domain-join-password"   # if joining AD
-export TF_VAR_proxy_url="http://proxy.corp.example.com:8080"        # if proxy needed for Linux package installs
 ```
 
 The `.gitignore` in this repo excludes `terraform.tfvars` and `*.auto.tfvars` to prevent accidental commits of credentials.
@@ -75,16 +73,12 @@ vms = {
 
 ## Domain Join
 
-A single set of `windows_domain*` variables drives domain join for **both** OS types:
-
-- **Windows** — credentials are passed directly into Sysprep via the module's `windows_options` block.
-- **Linux** — the module automatically generates and runs a `realmd`/`sssd` join script during guest customization. The script is idempotent (skips if already joined), retries the join up to 5 times, configures SSSD and Kerberos, and hardens PAM. It targets RHEL-family systems.
+The `windows_domain*` variables drive Windows domain join via Sysprep. Linux domain join is handled by Ansible post-boot.
 
 ```hcl
-windows_domain         = "corp.example.com"
-windows_domain_netbios = "CORP"                           # Linux realm join only
-windows_domain_user    = "svc-domainjoin@corp.example.com"
-windows_domain_ou      = "OU=Servers,DC=corp,DC=example,DC=com"
+windows_domain      = "corp.example.com"
+windows_domain_user = "svc-domainjoin@corp.example.com"
+windows_domain_ou   = "OU=Servers,DC=corp,DC=example,DC=com"
 # windows_domain_password via TF_VAR_windows_domain_password
 ```
 
@@ -162,22 +156,6 @@ vms = {
 ```
 
 For multiple SCSI controllers, calculate `unit_number` as `(bus * 16) + unit`. For example, Bus 1 Unit 0 = `16`, Bus 2 Unit 0 = `32`.
-
-### Per-VM first-boot script (Linux)
-
-`linux_script_text` runs as root during guest customization. When domain join is also enabled, the per-VM script runs **after** the domain join script.
-
-```hcl
-vms = {
-  "lnx-web-01" = {
-    is_windows        = false
-    linux_script_text = <<-EOT
-      dnf install -y nginx
-      systemctl enable nginx
-    EOT
-  }
-}
-```
 
 ### Windows RunOnce commands
 
@@ -289,10 +267,9 @@ One `ip_settings` entry per NIC, in the same order as `network_interfaces`. Leav
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `guest_id` | `string` | inherited from template | vSphere guest OS identifier |
-| `domain` | `string` | `null` | DNS search domain; also used as the realm for Linux domain join |
+| `domain` | `string` | `null` | DNS search domain applied during guest customization |
 | `time_zone_linux` | `string` | `"UTC"` | Default timezone for Linux VMs — Olson format (e.g. `Australia/Brisbane`) |
 | `time_zone_windows` | `number` | `260` | Default timezone index for Windows VMs (0–260). 260 = Brisbane |
-| `linux_script_text` | `string` | `null` | Global inline shell script for Linux VMs, appended after domain join |
 
 Per-VM `time_zone_linux` and `time_zone_windows` fields in the `vms` map override these globals for individual VMs.
 
@@ -311,7 +288,9 @@ Full list: [Microsoft Time Zone Index Values](https://learn.microsoft.com/en-us/
 
 Common Linux Olson timezones: `UTC`, `America/New_York`, `America/Chicago`, `America/Los_Angeles`, `Europe/London`, `Australia/Brisbane`, `Australia/Sydney`
 
-### Domain Join
+### Domain Join (Windows only)
+
+Linux domain join is handled by Ansible post-boot.
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -319,9 +298,7 @@ Common Linux Olson timezones: `UTC`, `America/New_York`, `America/Chicago`, `Ame
 | `windows_domain_user` | `string` | `null` | AD user with machine join permissions |
 | `windows_domain_password` | `string` | `null` | Domain join password (sensitive) — set via `TF_VAR_windows_domain_password` |
 | `windows_domain_ou` | `string` | `null` | OU distinguished name for the computer object. `null` uses the default Computers container |
-| `windows_domain_netbios` | `string` | `null` | NetBIOS name of the domain (e.g. `CORP`) — Linux realm join only. Falls back to `windows_domain` if null |
 | `windows_workgroup` | `string` | `"WORKGROUP"` | Workgroup name for Windows VMs when not domain-joined |
-| `proxy_url` | `string` | `null` | HTTP/HTTPS proxy URL for the Linux package install step (e.g. `http://proxy.corp.example.com:8080`). Set via `TF_VAR_proxy_url`. Overridden per-VM via `vms[].proxy_url` |
 
 ### Windows-Only
 

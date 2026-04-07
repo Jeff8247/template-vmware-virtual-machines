@@ -10,9 +10,6 @@ locals {
 
       # computer_name: Windows truncates to 15 chars if not explicitly set; Linux uses full VM name
       computer_name = v.computer_name != null ? v.computer_name : (v.is_windows ? substr(k, 0, 15) : k)
-
-      # linux_script_text: any per-VM or global additional script (domain join is handled by the module)
-      linux_script_text = v.linux_script_text != null ? v.linux_script_text : var.linux_script_text
     }
   }
 }
@@ -43,7 +40,7 @@ check "windows_computer_name_limit" {
 
 module "vm" {
   for_each = var.vms
-  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.20"
+  source   = "github.com/Jeff8247/module-vmware-virtual-machine?ref=v1.0.22"
 
   # Infrastructure placement
   datacenter    = coalesce(each.value.datacenter, var.datacenter)
@@ -97,16 +94,11 @@ module "vm" {
   vbs_enabled              = each.value.is_windows ? (each.value.vbs_enabled != null ? each.value.vbs_enabled : var.vbs_enabled) : false
   efi_secure_boot_enabled  = each.value.is_windows ? (each.value.efi_secure_boot_enabled != null ? each.value.efi_secure_boot_enabled : var.efi_secure_boot_enabled) : false
 
-  # Domain join — Windows uses Sysprep; Linux uses realmd/sssd script (both handled by module)
+  # Domain join — Windows uses Sysprep (handled by module)
   windows_domain          = each.value.windows_domain != null ? each.value.windows_domain : var.windows_domain
   windows_domain_user     = each.value.windows_domain_user != null ? each.value.windows_domain_user : var.windows_domain_user
   windows_domain_password = each.value.windows_domain_password != null ? each.value.windows_domain_password : var.windows_domain_password
   windows_domain_ou       = each.value.windows_domain_ou != null ? each.value.windows_domain_ou : var.windows_domain_ou
-  windows_domain_netbios  = each.value.windows_domain_netbios != null ? each.value.windows_domain_netbios : var.windows_domain_netbios
-
-  # Guest OS (Linux-specific — ignored by module when is_windows = true)
-  linux_script_text = each.value.is_windows ? null : local.vms_resolved[each.key].linux_script_text
-  proxy_url         = each.value.is_windows ? null : (each.value.proxy_url != null ? each.value.proxy_url : var.proxy_url)
 
   # Hardware
   firmware                    = local.vms_resolved[each.key].firmware
