@@ -162,3 +162,21 @@ windows_domain_ou = "OU=AppServers,OU=Servers,DC=corp,DC=example,DC=com"
 
 # ─── Windows Credentials ──────────────────────────────────────────────────────
 # windows_admin_password = set via TF_VAR_windows_admin_password
+
+# ─── Ansible Inventory ────────────────────────────────────────────────────────
+# Generated automatically under inventory/ on every terraform apply.
+# Pass the directory to Ansible: ansible-playbook -i inventory/ playbook.yml
+#
+# inventory/
+#   hosts.yml                  — groups: linux, windows, domain_joined, tag_*
+#   group_vars/linux.yml       — shared SSH connection vars for all Linux hosts
+#   group_vars/windows.yml     — shared WinRM connection vars for all Windows hosts
+#   host_vars/<vm>.yml         — per-VM: ansible_host (IP), computer_name, vm_uuid, domain facts
+#
+# The inventory/ directory is gitignored — it is always regenerated from state.
+# Override these defaults only if your environment differs.
+
+# ansible_linux_user            = "ansible"   # SSH user on Linux VMs
+# ansible_windows_user          = "Administrator"   # WinRM user on Windows VMs
+# ansible_winrm_transport       = "ntlm"      # ntlm | kerberos | basic
+# ansible_winrm_cert_validation = "ignore"    # set to "validate" when using port 5986 with proper certs

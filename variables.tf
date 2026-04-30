@@ -466,3 +466,39 @@ variable "extra_config" {
   type        = map(string)
   default     = {}
 }
+
+# ─── Ansible ──────────────────────────────────────────────────────────────────
+
+variable "ansible_linux_user" {
+  description = "SSH user Ansible connects as on Linux VMs"
+  type        = string
+  default     = "ansible"
+}
+
+variable "ansible_windows_user" {
+  description = "WinRM user Ansible connects as on Windows VMs"
+  type        = string
+  default     = "Administrator"
+}
+
+variable "ansible_winrm_transport" {
+  description = "WinRM transport method for Windows VMs: ntlm, kerberos, or basic"
+  type        = string
+  default     = "ntlm"
+
+  validation {
+    condition     = contains(["ntlm", "kerberos", "basic"], var.ansible_winrm_transport)
+    error_message = "ansible_winrm_transport must be ntlm, kerberos, or basic."
+  }
+}
+
+variable "ansible_winrm_cert_validation" {
+  description = "WinRM server certificate validation for Windows VMs: validate or ignore"
+  type        = string
+  default     = "ignore"
+
+  validation {
+    condition     = contains(["validate", "ignore"], var.ansible_winrm_cert_validation)
+    error_message = "ansible_winrm_cert_validation must be validate or ignore."
+  }
+}

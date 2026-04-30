@@ -10,6 +10,7 @@ Set `is_windows = true` or `is_windows = false` per VM. OS-specific defaults (fi
 |------|---------|
 | Terraform | `>= 1.3, < 2.0` |
 | vSphere provider | `~> 2.6` |
+| `hashicorp/local` provider | `~> 2.0` |
 | vCenter | 7.0+ recommended |
 
 VM templates with VMware Tools installed must already exist in vCenter. Linux templates require `open-vm-tools` to support guest customization scripts.
@@ -70,6 +71,58 @@ vms = {
 | `firmware` | `efi` | `bios` |
 | `time_zone` | from `time_zone_windows` | from `time_zone_linux` |
 | `computer_name` | truncated to 15 chars | full VM name |
+
+## Ansible Day-2 Operations
+
+Every `terraform apply` generates a ready-to-use Ansible inventory under `inventory/`:
+
+```
+inventory/
+├── hosts.yml                  # group structure — linux, windows, domain_joined, tag_*
+├── group_vars/
+│   ├── linux.yml              # SSH connection vars for all Linux hosts
+│   └── windows.yml            # WinRM connection vars for all Windows hosts
+└── host_vars/
+    ├── lnx-app-01.yml         # ansible_host (IP), computer_name, vm_uuid, domain facts
+    └── win-app-01.yml
+```
+
+Pass the directory to Ansible so it picks up group_vars and host_vars automatically:
+
+```bash
+ansible-inventory -i inventory/ --graph
+ansible-playbook -i inventory/ site.yml
+```
+
+IPs come from VMware Tools output (`default_ip_address`), so they reflect the actual address reported after guest customization — static or DHCP.
+
+**Groups generated:**
+
+| Group | Members |
+|-------|---------|
+| `linux` | All VMs with `is_windows = false` |
+| `windows` | All VMs with `is_windows = true` |
+| `domain_joined` | All VMs with `windows_domain` set |
+| `tag_<category>_<value>` | One group per vSphere tag, e.g. `tag_environment_prod` |
+
+**Ansible variables set per group:**
+
+`group_vars/linux.yml` — `ansible_connection: ssh`, `ansible_port: 22`, `ansible_user`, `ansible_become: true`, `ansible_become_method: sudo`
+
+`group_vars/windows.yml` — `ansible_connection: winrm`, `ansible_port: 5985`, `ansible_user`, `ansible_winrm_transport`, `ansible_winrm_server_cert_validation`
+
+**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`.
+
+The `inventory/` directory is gitignored — it is always regenerated from Terraform state.
+
+### Ansible Variable Reference
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ansible_linux_user` | `"ansible"` | SSH user Ansible connects as on Linux VMs |
+| `ansible_windows_user` | `"Administrator"` | WinRM user Ansible connects as on Windows VMs |
+| `ansible_winrm_transport` | `"ntlm"` | WinRM transport: `ntlm`, `kerberos`, or `basic` |
+| `ansible_winrm_cert_validation` | `"ignore"` | Certificate validation: `ignore` for testing, `validate` for production with proper certs (use with port 5986) |
 
 ## Domain Join
 
@@ -351,12 +404,13 @@ default_ip_addresses = {
 ```
 .
 ├── main.tf                    # OS-conditional defaults, module call
+├── ansible.tf                 # Ansible inventory generation (local_file resources)
 ├── variables.tf               # All input variables with validation
 ├── outputs.tf                 # Map outputs keyed by VM name
 ├── versions.tf                # Terraform and provider version constraints
 ├── providers.tf               # vSphere provider configuration
 ├── terraform.tfvars.example   # Annotated example — copy to terraform.tfvars
-└── .gitignore                 # Excludes state, .terraform/, and tfvars files
+└── .gitignore                 # Excludes state, .terraform/, tfvars, and inventory/
 ```
 
 ## Security Notes
@@ -365,3 +419,4 @@ default_ip_addresses = {
 - `terraform.tfvars` is excluded by `.gitignore` to prevent accidental credential commits. All passwords should be passed via `TF_VAR_*` environment variables.
 - `vsphere_allow_unverified_ssl` defaults to `false`. Only set to `true` in non-production lab environments.
 - Terraform state (`terraform.tfstate`) contains all resource attributes including sensitive values. Store state in a secured remote backend (e.g. S3 with encryption, Terraform Cloud) for any shared or production use. See `versions.tf` for where to add a backend block.
+- `inventory/` is excluded by `.gitignore`. Generated host_vars files contain domain and OU information — do not commit them or store them in locations accessible to unauthorised users. Ansible Vault should be used for any secrets passed to playbooks (e.g. domain join credentials, become passwords).
