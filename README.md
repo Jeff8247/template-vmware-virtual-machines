@@ -87,16 +87,64 @@ inventory/
     └── win-app-01.yml
 ```
 
-Pass the directory to Ansible so it picks up group_vars and host_vars automatically:
-
-```bash
-ansible-inventory -i inventory/ --graph
-ansible-playbook -i inventory/ site.yml
-```
-
 IPs come from VMware Tools output (`default_ip_address`), so they reflect the actual address reported after guest customization — static or DHCP.
 
-**Groups generated:**
+### Prerequisites
+
+**Ansible control node:**
+- `sshpass` must be installed for password-based SSH connections to Linux VMs (`yum install sshpass` / `apt install sshpass`)
+- `pywinrm` must be installed for WinRM connections to Windows VMs (`pip install pywinrm`)
+
+**Linux VMs — must be in place before running playbooks:**
+- The `ansible_linux_user` account (default: `ansible`) must exist on each VM
+- That user must have passwordless sudo, e.g. add to sudoers: `ansible ALL=(ALL) NOPASSWD: ALL`
+
+**Windows VMs:**
+- WinRM must be enabled before Ansible can connect. Run via `windows_run_once` or bake it into the template:
+  ```powershell
+  winrm quickconfig -q
+  ```
+
+### Running Playbooks
+
+Credentials are not stored in the inventory — pass them at runtime:
+
+```bash
+# Inspect the inventory before running
+ansible-inventory -i inventory/ --graph
+
+# Linux — prompt for SSH password (requires sshpass on the control node)
+ansible-playbook -i inventory/ site.yml --ask-pass
+
+# Linux — prompt for SSH and sudo passwords (if sudo is not passwordless)
+ansible-playbook -i inventory/ site.yml --ask-pass --ask-become-pass
+
+# Windows — pass WinRM password inline
+ansible-playbook -i inventory/ site.yml -e "ansible_password=YourPassword"
+
+# Mixed — target only Linux or only Windows hosts
+ansible-playbook -i inventory/ site.yml --limit linux --ask-pass
+ansible-playbook -i inventory/ site.yml --limit windows -e "ansible_password=YourPassword"
+```
+
+For non-interactive use, store credentials in an Ansible Vault file:
+
+```bash
+# Create and encrypt the vault file
+ansible-vault create vault.yml
+```
+
+```yaml
+# vault.yml contents
+ansible_password: "YourPassword"
+ansible_become_password: "YourPassword"   # Linux only, if sudo requires a password
+```
+
+```bash
+ansible-playbook -i inventory/ site.yml -e @vault.yml --vault-password-file ~/.vault_pass
+```
+
+### Groups
 
 | Group | Members |
 |-------|---------|
@@ -105,11 +153,11 @@ IPs come from VMware Tools output (`default_ip_address`), so they reflect the ac
 | `domain_joined` | All VMs with `windows_domain` set |
 | `tag_<category>_<value>` | One group per vSphere tag, e.g. `tag_environment_prod` |
 
-**Ansible variables set per group:**
+### Connection Details
 
-`group_vars/linux.yml` — `ansible_connection: ssh`, `ansible_port: 22`, `ansible_user`, `ansible_become: true`, `ansible_become_method: sudo`
+**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Password supplied at runtime via `--ask-pass`.
 
-`group_vars/windows.yml` — `ansible_connection: winrm`, `ansible_port: 5985`, `ansible_user`, `ansible_winrm_transport`, `ansible_winrm_server_cert_validation`
+**Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using NTLM transport by default. Password supplied at runtime via `-e ansible_password=...` or Vault. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates.
 
 **Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`.
 
@@ -119,10 +167,10 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ansible_linux_user` | `"ansible"` | SSH user Ansible connects as on Linux VMs |
+| `ansible_linux_user` | `"ansible"` | SSH user Ansible connects as on Linux VMs — must exist on each VM with passwordless sudo |
 | `ansible_windows_user` | `"Administrator"` | WinRM user Ansible connects as on Windows VMs |
 | `ansible_winrm_transport` | `"ntlm"` | WinRM transport: `ntlm`, `kerberos`, or `basic` |
-| `ansible_winrm_cert_validation` | `"ignore"` | Certificate validation: `ignore` for testing, `validate` for production with proper certs (use with port 5986) |
+| `ansible_winrm_cert_validation` | `"ignore"` | Certificate validation: `ignore` for testing, `validate` for production with proper certs on port 5986 |
 
 ## Domain Join
 

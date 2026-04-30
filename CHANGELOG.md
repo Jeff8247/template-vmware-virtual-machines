@@ -10,12 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Ansible inventory generation via `ansible.tf`. On `terraform apply`, writes a ready-to-use inventory under `inventory/`:
   - `inventory/hosts.yml` — group structure: `linux`, `windows`, `domain_joined`, and one group per vSphere tag (`tag_<category>_<value>`)
-  - `inventory/group_vars/linux.yml` — shared SSH connection vars (`ansible_connection`, `ansible_port`, `ansible_user`, `ansible_become`)
-  - `inventory/group_vars/windows.yml` — shared WinRM connection vars (`ansible_connection`, `ansible_port`, `ansible_winrm_transport`, `ansible_winrm_server_cert_validation`)
+  - `inventory/group_vars/linux.yml` — SSH on port 22, `ansible_become: true` via sudo; password supplied at runtime via `--ask-pass` (requires `sshpass` on the control node)
+  - `inventory/group_vars/windows.yml` — WinRM on port 5985, NTLM transport by default; password supplied at runtime via `-e ansible_password=...` or Ansible Vault (requires `pywinrm` on the control node)
   - `inventory/host_vars/<vm>.yml` — per-VM: `ansible_host` (IP from VMware Tools), `computer_name`, `vm_uuid`, and conditional domain facts
 - Four new variables: `ansible_linux_user` (default `"ansible"`), `ansible_windows_user` (default `"Administrator"`), `ansible_winrm_transport` (default `"ntlm"`), `ansible_winrm_cert_validation` (default `"ignore"`)
 - `inventory/` added to `.gitignore`
 - `hashicorp/local ~> 2.0` added to `required_providers`
+
+### Changed
+- README Ansible section expanded with prerequisites (`sshpass`, `pywinrm`), VM-side requirements (ansible user with passwordless sudo, WinRM enabled on Windows), and full credential/invocation examples including Ansible Vault
+- `terraform.tfvars.example` Ansible comment block updated to document control node and VM prerequisites alongside the variable overrides
 
 ## [1.0.16] - 2026-04-04
 
