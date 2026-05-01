@@ -138,9 +138,21 @@ variable "cluster" {
 }
 
 variable "datastore" {
-  description = "Name of the datastore"
+  description = "Name of the datastore for VM deployment"
   type        = string
   default     = "MYDS01"
+}
+
+variable "iso_datastore" {
+  description = "Datastore that holds the Ansible payload ISO. Defaults to var.datastore when null."
+  type        = string
+  default     = null
+}
+
+variable "iso_folder" {
+  description = "Folder path within iso_datastore where the payload ISO is stored (e.g. 'ISOs/')"
+  type        = string
+  default     = "ISOs/"
 }
 
 variable "resource_pool" {

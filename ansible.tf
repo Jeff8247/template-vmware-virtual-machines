@@ -1,7 +1,7 @@
 # ─── Ansible Inventory Generation ─────────────────────────────────────────────
 # Writes under inventory/ on terraform apply:
 #   inventory/hosts.yml                  — group structure
-#   inventory/group_vars/all.yml         — vCenter connection vars (fqdn, user, datacenter, cluster)
+#   inventory/group_vars/all.yml         — vCenter connection vars + ISO datastore path
 #   inventory/group_vars/linux.yml       — shared SSH connection vars
 #   inventory/group_vars/windows.yml     — shared WinRM connection vars
 #   inventory/host_vars/<vm>.yml         — per-VM: IP, hostname, domain facts
@@ -51,16 +51,17 @@ locals {
 }
 
 # ── inventory/group_vars/all.yml ─────────────────────────────────────────────
-# vCenter connection details sourced directly from terraform.tfvars — no manual
-# editing needed. The password is never written to disk; pass VMWARE_PASSWORD
-# as an environment variable at playbook runtime.
+# Sourced directly from terraform.tfvars — no manual editing needed.
+# The vCenter password is never written to disk; pass VMWARE_PASSWORD as an
+# environment variable at playbook runtime.
 resource "local_file" "ansible_group_vars_all" {
   filename = "${path.root}/inventory/group_vars/all.yml"
   content = yamlencode({
-    vcenter_fqdn     = var.vsphere_server
-    vcenter_username = var.vsphere_user
-    vm_datacenter    = var.datacenter
-    vm_cluster       = var.cluster
+    vcenter_fqdn       = var.vsphere_server
+    vcenter_username   = var.vsphere_user
+    vm_datacenter      = var.datacenter
+    vm_cluster         = var.cluster
+    iso_datastore_path = "[${coalesce(var.iso_datastore, var.datastore)}] ${var.iso_folder}"
   })
   file_permission = "0644"
 }

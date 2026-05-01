@@ -9,6 +9,13 @@ cluster    = "MYCLU01"
 datastore  = "MYDS01"
 vm_folder  = "VMs/AppServers"
 
+# ─── Ansible Payload ISO ──────────────────────────────────────────────────────
+# Datastore and folder where the Windows post-provision payload ISO is stored.
+# iso_datastore defaults to the VM datastore above when not set.
+# iso_folder    defaults to "ISOs/" when not set.
+iso_datastore = "MYDS01"
+iso_folder    = "ISOs/"
+
 # ─── Templates ────────────────────────────────────────────────────────────────
 template_name_windows = "template-win2k19-ltsc-64bit-datacenter"
 template_name_linux   = "template-ubuntu-22.04-lts"

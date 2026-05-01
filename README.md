@@ -80,7 +80,7 @@ Every `terraform apply` generates a ready-to-use Ansible inventory under `invent
 inventory/
 ├── hosts.yml                  # group structure — linux, windows, domain_joined, tag_*
 ├── group_vars/
-│   ├── all.yml                # vCenter connection vars (fqdn, username, datacenter, cluster)
+│   ├── all.yml                # vCenter connection vars + ISO datastore path
 │   ├── linux.yml              # SSH connection vars for all Linux hosts
 │   └── windows.yml            # WinRM connection vars for all Windows hosts
 └── host_vars/
@@ -167,7 +167,7 @@ ansible-playbook -i inventory/ site.yml --limit linux -e @vault.yml --vault-pass
 
 **Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using Kerberos transport by default. Authentication uses the active Kerberos ticket from `kinit` — no password flag needed at runtime. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates. Use `ntlm` transport for workgroup (non-domain) machines.
 
-**vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, and `vm_cluster` are sourced directly from `terraform.tfvars` (`vsphere_server`, `vsphere_user`, `datacenter`, `cluster`). Playbooks can use these directly without any manual configuration. The vCenter password is never written to inventory — pass it as `VMWARE_PASSWORD` at playbook runtime.
+**vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`, and `iso_datastore_path` are sourced directly from `terraform.tfvars`. Playbooks can use these without any manual configuration. The vCenter password is never written to inventory — pass it as `VMWARE_PASSWORD` at playbook runtime.
 
 **Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`.
 
@@ -181,6 +181,8 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `ansible_windows_user` | `"svc-ansible@domain.local"` | WinRM user Ansible connects as on Windows VMs. Use a domain service account in UPN format for domain-joined VMs. Must be a local Administrator or member of the local Administrators group on each VM. |
 | `ansible_winrm_transport` | `"kerberos"` | WinRM transport: `ntlm`, `kerberos`, or `basic` |
 | `ansible_winrm_cert_validation` | `"ignore"` | Certificate validation: `ignore` for testing, `validate` for production with proper certs on port 5986 |
+| `iso_datastore` | `null` (uses `datastore`) | Datastore holding the Ansible payload ISO. Defaults to the VM datastore when not set. |
+| `iso_folder` | `"ISOs/"` | Folder path within `iso_datastore` where the payload ISO is stored |
 
 ## Domain Join
 
