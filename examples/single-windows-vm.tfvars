@@ -21,7 +21,7 @@ network_interfaces = [{ network_name = "NET01" }]
 dns_servers        = ["10.0.0.1", "10.0.0.2"]
 dns_suffix_list    = ["corp.example.com"]
 domain             = "corp.example.com"
-time_zone_windows  = 260
+time_zone_windows  = 260  # 260 = E. Australia Standard Time (Brisbane, UTC+10, no DST)
 hardware_version   = 21
 
 # ─── Domain Join ──────────────────────────────────────────────────────────────
