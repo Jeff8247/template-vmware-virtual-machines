@@ -126,13 +126,11 @@ ansible-playbook -i inventory/ site.yml --ask-pass --ask-become-pass
 # Windows post-provision — obtain a Kerberos ticket and set vCenter password first
 kinit svc-ansible@CORP.LOCAL
 export VMWARE_PASSWORD="your-vcenter-password"
-ansible-playbook -i inventory/ post_provision.yml \
-  -e "vlan=100"
+ansible-playbook -i inventory/ post_provision.yml
 
 # Mixed — target Linux and Windows separately
 ansible-playbook -i inventory/ site.yml --limit linux --ask-pass
-ansible-playbook -i inventory/ post_provision.yml --limit windows \
-  -e "vlan=100"
+ansible-playbook -i inventory/ post_provision.yml --limit windows
 ```
 
 For Linux non-interactive use, store credentials in an Ansible Vault file:
@@ -184,6 +182,7 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `iso_datastore` | `null` (uses `datastore`) | Datastore holding the Ansible payload ISO. Defaults to the VM datastore when not set. |
 | `iso_folder` | `"ISOs/"` | Folder path within `iso_datastore` where the payload ISO is stored |
 | `iso_filename` | `null` | Filename of the payload ISO (e.g. `payload-2024.iso`) |
+| `vlan` | `null` | VLAN number for the Ansible NIC rename (e.g. `100` → `vNIC - VLAN 100`) |
 
 ## Domain Join
 

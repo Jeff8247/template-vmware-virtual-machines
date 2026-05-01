@@ -161,6 +161,12 @@ variable "iso_filename" {
   default     = null
 }
 
+variable "vlan" {
+  description = "VLAN number used to name the primary NIC during Ansible post-provisioning (e.g. 100 → 'vNIC - VLAN 100')"
+  type        = number
+  default     = null
+}
+
 variable "resource_pool" {
   description = "Resource pool name. Defaults to the root pool of the cluster when null."
   type        = string

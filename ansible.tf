@@ -63,6 +63,7 @@ resource "local_file" "ansible_group_vars_all" {
     vm_cluster         = var.cluster
     iso_datastore_path = "[${coalesce(var.iso_datastore, var.datastore)}] ${var.iso_folder}"
     iso_filename       = var.iso_filename
+    vlan               = var.vlan
   })
   file_permission = "0644"
 }

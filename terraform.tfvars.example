@@ -16,6 +16,7 @@ vm_folder  = "VMs/AppServers"
 iso_datastore = "MYDS01"
 iso_folder    = "ISOs/"
 iso_filename  = "payload-2024.iso"
+vlan          = 100
 
 # ─── Templates ────────────────────────────────────────────────────────────────
 template_name_windows = "template-win2k19-ltsc-64bit-datacenter"
