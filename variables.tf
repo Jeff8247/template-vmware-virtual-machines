@@ -155,6 +155,12 @@ variable "iso_folder" {
   default     = "ISOs/"
 }
 
+variable "iso_filename" {
+  description = "Filename of the Ansible payload ISO on the datastore (e.g. 'payload-2024.iso')"
+  type        = string
+  default     = null
+}
+
 variable "resource_pool" {
   description = "Resource pool name. Defaults to the root pool of the cluster when null."
   type        = string

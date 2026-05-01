@@ -127,12 +127,12 @@ ansible-playbook -i inventory/ site.yml --ask-pass --ask-become-pass
 kinit svc-ansible@CORP.LOCAL
 export VMWARE_PASSWORD="your-vcenter-password"
 ansible-playbook -i inventory/ post_provision.yml \
-  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso"
+  -e "DOMAIN_site=SYD vlan=100"
 
 # Mixed — target Linux and Windows separately
 ansible-playbook -i inventory/ site.yml --limit linux --ask-pass
 ansible-playbook -i inventory/ post_provision.yml --limit windows \
-  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso"
+  -e "DOMAIN_site=SYD vlan=100"
 ```
 
 For Linux non-interactive use, store credentials in an Ansible Vault file:
@@ -183,6 +183,7 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `ansible_winrm_cert_validation` | `"ignore"` | Certificate validation: `ignore` for testing, `validate` for production with proper certs on port 5986 |
 | `iso_datastore` | `null` (uses `datastore`) | Datastore holding the Ansible payload ISO. Defaults to the VM datastore when not set. |
 | `iso_folder` | `"ISOs/"` | Folder path within `iso_datastore` where the payload ISO is stored |
+| `iso_filename` | `null` | Filename of the payload ISO (e.g. `payload-2024.iso`) |
 
 ## Domain Join
 
