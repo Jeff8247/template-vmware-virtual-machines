@@ -391,6 +391,12 @@ variable "windows_domain_ou" {
   default     = null
 }
 
+variable "windows_domain_netbios" {
+  description = "NetBIOS (short) name of the domain (e.g. CORP). Used by Ansible for Linux realm join."
+  type        = string
+  default     = null
+}
+
 variable "windows_workgroup" {
   description = "Workgroup name for Windows VMs when not domain-joined"
   type        = string

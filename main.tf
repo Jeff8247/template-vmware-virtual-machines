@@ -68,7 +68,9 @@ module "vm" {
   memory_hot_add_enabled = coalesce(each.value.memory_hot_add_enabled, var.memory_hot_add_enabled)
 
   # Storage
-  disks                 = coalesce(each.value.disks, var.disks)
+  disks = [for idx, d in coalesce(each.value.disks, var.disks) : merge(d, {
+    unit_number = coalesce(d.unit_number, idx)
+  })]
   scsi_type             = coalesce(each.value.scsi_type, var.scsi_type)
   scsi_controller_count = coalesce(each.value.scsi_controller_count, var.scsi_controller_count)
 
