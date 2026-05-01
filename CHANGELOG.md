@@ -5,6 +5,25 @@ All notable changes to this template will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Ansible inventory generation via `ansible.tf`. On `terraform apply`, writes a ready-to-use inventory under `inventory/`:
+  - `inventory/hosts.yml` — group structure: `linux`, `windows`, `domain_joined`, and one group per vSphere tag (`tag_<category>_<value>`)
+  - `inventory/group_vars/all.yml` — vCenter connection details sourced from `terraform.tfvars`: `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`. Password never written to disk.
+  - `inventory/group_vars/linux.yml` — SSH on port 22, `ansible_become: true` via sudo
+  - `inventory/group_vars/windows.yml` — WinRM on port 5985, Kerberos transport by default
+  - `inventory/host_vars/<vm>.yml` — per-VM: `ansible_host` (IP from VMware Tools), `computer_name`, `vm_uuid`, and conditional domain facts
+- Four new variables: `ansible_linux_user` (default `"ansible"`), `ansible_windows_user` (default `"svc-ansible@domain.local"`), `ansible_winrm_transport` (default `"kerberos"`), `ansible_winrm_cert_validation` (default `"ignore"`)
+- `inventory/` added to `.gitignore`
+- `hashicorp/local ~> 2.0` added to `required_providers`
+
+### Changed
+- `ansible_winrm_transport` default changed from `ntlm` to `kerberos` — domain-joined VMs require Kerberos for the Windows post-provision playbook
+- `ansible_windows_user` default changed from `Administrator` to `svc-ansible@domain.local` — domain service account in UPN format required for Kerberos authentication
+- README Ansible section expanded with full inventory structure, connection details, Kerberos prerequisites, and real-world run examples
+- `terraform.tfvars.example` Ansible section updated to reflect Kerberos defaults and domain service account guidance
+
 ## [1.0.16] - 2026-04-04
 
 ### Added

@@ -162,3 +162,36 @@ windows_domain_ou = "OU=AppServers,OU=Servers,DC=corp,DC=example,DC=com"
 
 # ─── Windows Credentials ──────────────────────────────────────────────────────
 # windows_admin_password = set via TF_VAR_windows_admin_password
+
+# ─── Ansible Inventory ────────────────────────────────────────────────────────
+# Generated automatically under inventory/ on every terraform apply.
+# inventory/ is gitignored and always regenerated from state — do not commit it.
+#
+# inventory/
+#   hosts.yml                  — groups: linux, windows, domain_joined, tag_*
+#   group_vars/linux.yml       — SSH connection vars (port 22, sudo escalation)
+#   group_vars/windows.yml     — WinRM connection vars (port 5985, NTLM by default)
+#   host_vars/<vm>.yml         — per-VM: ansible_host (IP), computer_name, vm_uuid, domain facts
+#
+# Prerequisites before running playbooks:
+#   Control node: sshpass (for Linux password auth), pywinrm (for Windows WinRM)
+#     yum install sshpass  /  apt install sshpass
+#     pip install pywinrm
+#
+#   Linux VMs: ansible_linux_user must exist with passwordless sudo
+#     e.g. sudoers entry: ansible ALL=(ALL) NOPASSWD: ALL
+#
+#   Windows VMs: WinRM must be enabled (winrm quickconfig -q)
+#     Add to windows_run_once or bake into the VM template.
+#
+# Running playbooks — credentials are not stored in the inventory, pass at runtime:
+#   Linux:   ansible-playbook -i inventory/ site.yml --ask-pass
+#   Windows: ansible-playbook -i inventory/ site.yml -e "ansible_password=YourPassword"
+#   Vault:   ansible-playbook -i inventory/ site.yml -e @vault.yml --vault-password-file ~/.vault_pass
+#
+# Override these defaults only if your environment differs:
+
+# ansible_linux_user            = "ansible"        # SSH user — must exist on Linux VMs with passwordless sudo
+# ansible_windows_user          = "svc-ansible@domain.local"  # domain service account for domain-joined VMs (UPN format)
+# ansible_winrm_transport       = "kerberos"        # ntlm | kerberos | basic
+# ansible_winrm_cert_validation = "ignore"         # set to "validate" with proper certs on port 5986

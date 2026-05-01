@@ -10,6 +10,7 @@ Set `is_windows = true` or `is_windows = false` per VM. OS-specific defaults (fi
 |------|---------|
 | Terraform | `>= 1.3, < 2.0` |
 | vSphere provider | `~> 2.6` |
+| `hashicorp/local` provider | `~> 2.0` |
 | vCenter | 7.0+ recommended |
 
 VM templates with VMware Tools installed must already exist in vCenter. Linux templates require `open-vm-tools` to support guest customization scripts.
@@ -70,6 +71,118 @@ vms = {
 | `firmware` | `efi` | `bios` |
 | `time_zone` | from `time_zone_windows` | from `time_zone_linux` |
 | `computer_name` | truncated to 15 chars | full VM name |
+
+## Ansible Day-2 Operations
+
+Every `terraform apply` generates a ready-to-use Ansible inventory under `inventory/`:
+
+```
+inventory/
+├── hosts.yml                  # group structure — linux, windows, domain_joined, tag_*
+├── group_vars/
+│   ├── all.yml                # vCenter connection vars (fqdn, username, datacenter, cluster)
+│   ├── linux.yml              # SSH connection vars for all Linux hosts
+│   └── windows.yml            # WinRM connection vars for all Windows hosts
+└── host_vars/
+    ├── lnx-app-01.yml         # ansible_host (IP), computer_name, vm_uuid, domain facts
+    └── win-app-01.yml
+```
+
+IPs come from VMware Tools output (`default_ip_address`), so they reflect the actual address reported after guest customization — static or DHCP.
+
+### Prerequisites
+
+**Ansible control node:**
+- `sshpass` must be installed for password-based SSH connections to Linux VMs (`yum install sshpass` / `apt install sshpass`)
+- `pywinrm` must be installed for WinRM connections to Windows VMs (`pip install pywinrm`)
+- Kerberos client libraries must be installed for Windows connections (`yum install krb5-workstation` / `apt install krb5-user`)
+- A valid Kerberos ticket must be obtained before running against Windows VMs: `kinit user@DOMAIN.COM`
+
+**Linux VMs — must be in place before running playbooks:**
+- The `ansible_linux_user` account (default: `ansible`) must exist on each VM
+- That user must have passwordless sudo, e.g. add to sudoers: `ansible ALL=(ALL) NOPASSWD: ALL`
+
+**Windows VMs:**
+- WinRM must be enabled before Ansible can connect. Run via `windows_run_once` or bake it into the template:
+  ```powershell
+  winrm quickconfig -q
+  ```
+- VMs must be domain-joined for Kerberos authentication to work. Domain join is handled automatically via Sysprep when `windows_domain` is set.
+
+### Running Playbooks
+
+Credentials are not stored in the inventory — pass them at runtime:
+
+```bash
+# Inspect the inventory before running
+ansible-inventory -i inventory/ --graph
+
+# Linux — prompt for SSH password (requires sshpass on the control node)
+ansible-playbook -i inventory/ site.yml --ask-pass
+
+# Linux — prompt for SSH and sudo passwords (if sudo is not passwordless)
+ansible-playbook -i inventory/ site.yml --ask-pass --ask-become-pass
+
+# Windows post-provision — obtain a Kerberos ticket and set vCenter password first
+kinit svc-ansible@CORP.LOCAL
+export VMWARE_PASSWORD="your-vcenter-password"
+ansible-playbook -i inventory/ post_provision.yml \
+  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso" \
+  -e @site_vars/SYD.yml
+
+# Mixed — target Linux and Windows separately
+ansible-playbook -i inventory/ site.yml --limit linux --ask-pass
+ansible-playbook -i inventory/ post_provision.yml --limit windows \
+  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso" \
+  -e @site_vars/SYD.yml
+```
+
+For Linux non-interactive use, store credentials in an Ansible Vault file:
+
+```bash
+# Create and encrypt the vault file
+ansible-vault create vault.yml
+```
+
+```yaml
+# vault.yml contents
+ansible_password: "YourPassword"
+ansible_become_password: "YourPassword"   # if sudo requires a password
+```
+
+```bash
+ansible-playbook -i inventory/ site.yml --limit linux -e @vault.yml --vault-password-file ~/.vault_pass
+```
+
+### Groups
+
+| Group | Members |
+|-------|---------|
+| `linux` | All VMs with `is_windows = false` |
+| `windows` | All VMs with `is_windows = true` |
+| `domain_joined` | All VMs with `windows_domain` set |
+| `tag_<category>_<value>` | One group per vSphere tag, e.g. `tag_environment_prod` |
+
+### Connection Details
+
+**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Password supplied at runtime via `--ask-pass`.
+
+**Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using Kerberos transport by default. Authentication uses the active Kerberos ticket from `kinit` — no password flag needed at runtime. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates. Use `ntlm` transport for workgroup (non-domain) machines.
+
+**vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, and `vm_cluster` are sourced directly from `terraform.tfvars` (`vsphere_server`, `vsphere_user`, `datacenter`, `cluster`). Playbooks can use these directly without any manual configuration. The vCenter password is never written to inventory — pass it as `VMWARE_PASSWORD` at playbook runtime.
+
+**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`.
+
+The `inventory/` directory is gitignored — it is always regenerated from Terraform state.
+
+### Ansible Variable Reference
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ansible_linux_user` | `"ansible"` | SSH user Ansible connects as on Linux VMs — must exist on each VM with passwordless sudo |
+| `ansible_windows_user` | `"svc-ansible@domain.local"` | WinRM user Ansible connects as on Windows VMs. Use a domain service account in UPN format for domain-joined VMs. Must be a local Administrator or member of the local Administrators group on each VM. |
+| `ansible_winrm_transport` | `"kerberos"` | WinRM transport: `ntlm`, `kerberos`, or `basic` |
+| `ansible_winrm_cert_validation` | `"ignore"` | Certificate validation: `ignore` for testing, `validate` for production with proper certs on port 5986 |
 
 ## Domain Join
 
@@ -351,12 +464,13 @@ default_ip_addresses = {
 ```
 .
 ├── main.tf                    # OS-conditional defaults, module call
+├── ansible.tf                 # Ansible inventory generation (local_file resources)
 ├── variables.tf               # All input variables with validation
 ├── outputs.tf                 # Map outputs keyed by VM name
 ├── versions.tf                # Terraform and provider version constraints
 ├── providers.tf               # vSphere provider configuration
 ├── terraform.tfvars.example   # Annotated example — copy to terraform.tfvars
-└── .gitignore                 # Excludes state, .terraform/, and tfvars files
+└── .gitignore                 # Excludes state, .terraform/, tfvars, and inventory/
 ```
 
 ## Security Notes
@@ -365,3 +479,4 @@ default_ip_addresses = {
 - `terraform.tfvars` is excluded by `.gitignore` to prevent accidental credential commits. All passwords should be passed via `TF_VAR_*` environment variables.
 - `vsphere_allow_unverified_ssl` defaults to `false`. Only set to `true` in non-production lab environments.
 - Terraform state (`terraform.tfstate`) contains all resource attributes including sensitive values. Store state in a secured remote backend (e.g. S3 with encryption, Terraform Cloud) for any shared or production use. See `versions.tf` for where to add a backend block.
+- `inventory/` is excluded by `.gitignore`. Generated host_vars files contain domain and OU information — do not commit them or store them in locations accessible to unauthorised users. Ansible Vault should be used for any secrets passed to playbooks (e.g. domain join credentials, become passwords).

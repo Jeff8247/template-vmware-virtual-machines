@@ -16,5 +16,9 @@ terraform {
       source  = "vmware/vsphere"
       version = "~> 2.6"
     }
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.0"
+    }
   }
 }
