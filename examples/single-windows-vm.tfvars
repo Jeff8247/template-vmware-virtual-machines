@@ -21,7 +21,7 @@ network_interfaces = [{ network_name = "NET01" }]
 dns_servers        = ["10.0.0.1", "10.0.0.2"]
 dns_suffix_list    = ["corp.example.com"]
 domain             = "corp.example.com"
-time_zone_windows  = 260  # 260 = E. Australia Standard Time (Brisbane, UTC+10, no DST)
+time_zone_windows  = 260 # 260 = E. Australia Standard Time (Brisbane, UTC+10, no DST)
 hardware_version   = 21
 
 # ─── Domain Join ──────────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ windows_domain         = "corp.example.com"
 windows_domain_netbios = "CORP"
 windows_domain_user    = "svc-domainjoin@corp.example.com"
 # windows_domain_password = set via TF_VAR_windows_domain_password
-windows_domain_ou      = "OU=Servers,DC=corp,DC=example,DC=com"
+windows_domain_ou = "OU=Servers,DC=corp,DC=example,DC=com"
 
 # ─── Windows Credentials ──────────────────────────────────────────────────────
 # windows_admin_password = set via TF_VAR_windows_admin_password
@@ -56,8 +56,8 @@ vms = {
     num_cpus   = 4
     memory     = 8192
     disks = [
-      { label = "OS",   size = 100 },
-      { label = "Data", size = 50  }
+      { label = "OS", size = 100 },
+      { label = "Data", size = 50 }
     ]
     ip_settings  = [{ ipv4_address = "10.0.1.101", ipv4_netmask = 24 }]
     ipv4_gateway = "10.0.1.1"
