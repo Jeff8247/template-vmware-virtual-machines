@@ -34,6 +34,15 @@ windows_domain_ou = "OU=Servers,DC=corp,DC=example,DC=com"
 # ─── Windows Credentials ──────────────────────────────────────────────────────
 # windows_admin_password = set via TF_VAR_windows_admin_password
 
+# ─── Windows Run once ─────────────────────────────────────────────────────────
+windows_auto_logon       = true
+windows_auto_logon_count = 1
+
+windows_run_once = [
+  "powershell.exe -ExecutionPolicy Bypass -Command \"Set-NetFirewallRule -Name 'FPS-ICMP4-ERQ-In' -Enabled True\"",
+  "powershell.exe -ExecutionPolicy Bypass -Command \"Restart-Computer -Force\""
+]
+
 # ─── Ansible Post-Provisioning ────────────────────────────────────────────────
 iso_datastore = "MYDS01"
 iso_folder    = "ISOs/"
