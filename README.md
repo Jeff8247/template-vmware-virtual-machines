@@ -127,14 +127,12 @@ ansible-playbook -i inventory/ site.yml --ask-pass --ask-become-pass
 kinit svc-ansible@CORP.LOCAL
 export VMWARE_PASSWORD="your-vcenter-password"
 ansible-playbook -i inventory/ post_provision.yml \
-  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso" \
-  -e @site_vars/SYD.yml
+  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso"
 
 # Mixed — target Linux and Windows separately
 ansible-playbook -i inventory/ site.yml --limit linux --ask-pass
 ansible-playbook -i inventory/ post_provision.yml --limit windows \
-  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso" \
-  -e @site_vars/SYD.yml
+  -e "DOMAIN_site=SYD vlan=100 iso_filename=payload-2024.iso"
 ```
 
 For Linux non-interactive use, store credentials in an Ansible Vault file:
