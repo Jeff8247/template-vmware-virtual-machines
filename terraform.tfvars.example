@@ -65,6 +65,9 @@ iso_folder    = "ISOs/"    # folder within iso_datastore
 iso_filename  = "payload-2024.iso"
 vlan          = 100        # used to name the NIC: vNIC - VLAN <n>
 
+sccm_management_point = "sccm.corp.example.com"
+sccm_site_code        = "A01"
+
 # ansible_windows_user    = "svc-ansible@corp.example.com"   # domain service account (UPN format)
 # ansible_winrm_transport = "kerberos"                        # ntlm | kerberos | basic
 

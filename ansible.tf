@@ -66,6 +66,8 @@ resource "local_file" "ansible_group_vars_all" {
     vlan                   = var.vlan
     windows_domain         = var.windows_domain
     windows_domain_netbios = var.windows_domain_netbios
+    sccm_management_point  = var.sccm_management_point
+    sccm_site_code         = var.sccm_site_code
   })
   file_permission = "0644"
 }

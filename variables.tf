@@ -532,3 +532,15 @@ variable "ansible_winrm_cert_validation" {
     error_message = "ansible_winrm_cert_validation must be validate or ignore."
   }
 }
+
+variable "sccm_management_point" {
+  description = "FQDN of the SCCM management point (e.g. sccm.corp.example.com)"
+  type        = string
+  default     = null
+}
+
+variable "sccm_site_code" {
+  description = "SCCM site code (e.g. A01)"
+  type        = string
+  default     = null
+}
