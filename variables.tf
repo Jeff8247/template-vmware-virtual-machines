@@ -433,7 +433,7 @@ variable "windows_run_once" {
 # ─── Hardware ─────────────────────────────────────────────────────────────────
 
 variable "firmware" {
-  description = "VM firmware type: efi or bios. When null (default), efi is used for Windows VMs and bios for Linux VMs."
+  description = "VM firmware type: efi or bios. Defaults to efi for all VMs when null."
   type        = string
   default     = null
 

@@ -68,7 +68,7 @@ vms = {
 
 | Setting | Windows | Linux |
 |---------|---------|-------|
-| `firmware` | `efi` | `bios` |
+| `firmware` | `efi` | `efi` |
 | `time_zone` | from `time_zone_windows` | from `time_zone_linux` |
 | `computer_name` | truncated to 15 chars | full VM name |
 
@@ -428,7 +428,7 @@ Linux domain join is handled by Ansible post-boot.
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `firmware` | `string` | OS-conditional | `efi` for Windows, `bios` for Linux. Override globally or per-VM only if non-default behaviour is needed |
+| `firmware` | `string` | `efi` | EFI for all VMs by default. Override globally or per-VM if BIOS is needed |
 | `hardware_version` | `number` | `null` | VMware hardware version; `null` keeps the template version |
 | `tools_upgrade_policy` | `string` | `"upgradeAtPowerCycle"` | VMware Tools upgrade policy: `manual` or `upgradeAtPowerCycle` |
 | `enable_disk_uuid` | `bool` | `true` | Expose disk UUIDs to the guest OS |
