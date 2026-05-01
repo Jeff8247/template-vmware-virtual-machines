@@ -33,6 +33,9 @@ windows_domain_user    = "svc-domainjoin@corp.example.com"
 # windows_domain_password = set via TF_VAR_windows_domain_password
 windows_domain_ou      = "OU=Servers,DC=corp,DC=example,DC=com"
 
+# ─── Ansible Post-Provisioning ────────────────────────────────────────────────
+ansible_linux_user = "ansible"
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  VM DEFINITIONS — edit this block for each deployment

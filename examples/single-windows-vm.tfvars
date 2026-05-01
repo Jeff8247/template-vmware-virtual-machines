@@ -40,6 +40,10 @@ iso_folder    = "ISOs/"
 iso_filename  = "payload-2024.iso"
 vlan          = 100
 
+ansible_windows_user          = "svc-ansible@corp.example.com"
+ansible_winrm_transport       = "kerberos"
+ansible_winrm_cert_validation = "ignore"
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  VM DEFINITIONS — edit this block for each deployment
