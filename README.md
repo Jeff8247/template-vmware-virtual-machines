@@ -307,6 +307,8 @@ Each key in the `vms` map becomes the VM name in vSphere. `is_windows` is requir
 
 Per-VM `template_name` in the `vms` map overrides these globals, allowing individual VMs to use a different template (e.g. a different OS version).
 
+> **Template updates will not trigger VM recreation.** The module ignores `clone[0].template_uuid` after the initial clone — refreshing or replacing a template in vCenter (e.g. after a patch cycle) does not cause `terraform plan` to propose destroying and recreating existing VMs.
+
 ### VM Identity
 
 | Variable | Type | Default | Description |
