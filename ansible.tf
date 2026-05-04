@@ -82,14 +82,18 @@ resource "local_file" "ansible_hosts" {
 # ── inventory/group_vars/linux.yml ────────────────────────────────────────────
 resource "local_file" "ansible_group_vars_linux" {
   filename = "${path.root}/inventory/group_vars/linux.yml"
-  content = yamlencode({
-    ansible_connection    = "ssh"
-    ansible_port          = 22
-    ansible_user          = var.ansible_linux_user
-    ansible_become        = true
-    ansible_become_method = "sudo"
-    realm_join_user       = var.windows_domain_user
-  })
+  content = yamlencode(merge(
+    {
+      ansible_connection    = "ssh"
+      ansible_port          = 22
+      ansible_user          = var.ansible_linux_user
+      ansible_become        = true
+      ansible_become_method = "sudo"
+      realm_join_user       = var.windows_domain_user
+    },
+    var.domain_site != null ? { domain_site = var.domain_site } : {},
+    var.satellite_content_view != null ? { global_env_long = var.satellite_content_view } : {}
+  ))
   file_permission = "0644"
 }
 

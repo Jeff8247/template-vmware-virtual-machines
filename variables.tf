@@ -544,3 +544,15 @@ variable "sccm_site_code" {
   type        = string
   default     = null
 }
+
+variable "domain_site" {
+  description = "Site code used to select the Satellite capsule (e.g. sd1, bne, wa2). Written to inventory/group_vars/linux.yml as domain_site."
+  type        = string
+  default     = null
+}
+
+variable "satellite_content_view" {
+  description = "Satellite content view name used to resolve the activation key (e.g. Production, Test, Development). Written to inventory/group_vars/linux.yml as global_env_long."
+  type        = string
+  default     = null
+}
