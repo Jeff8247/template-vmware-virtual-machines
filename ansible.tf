@@ -88,6 +88,7 @@ resource "local_file" "ansible_group_vars_linux" {
     ansible_user          = var.ansible_linux_user
     ansible_become        = true
     ansible_become_method = "sudo"
+    realm_join_user       = var.windows_domain_user
   })
   file_permission = "0644"
 }

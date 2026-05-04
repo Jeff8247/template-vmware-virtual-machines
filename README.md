@@ -81,7 +81,7 @@ inventory/
 ├── hosts.yml                  # group structure — linux, windows, domain_joined, tag_*
 ├── group_vars/
 │   ├── all.yml                # vCenter connection vars + ISO datastore path
-│   ├── linux.yml              # SSH connection vars for all Linux hosts
+│   ├── linux.yml              # SSH connection vars + realm_join_user for all Linux hosts
 │   └── windows.yml            # WinRM connection vars for all Windows hosts
 └── host_vars/
     ├── lnx-app-01.yml         # ansible_host (IP), computer_name, vm_uuid, domain facts
@@ -111,43 +111,29 @@ IPs come from VMware Tools output (`default_ip_address`), so they reflect the ac
 
 ### Running Playbooks
 
-Credentials are not stored in the inventory — pass them at runtime:
+Credentials are not stored in the inventory — pass them at runtime. See [`Jeff8247/ansible-post-provision`](https://github.com/Jeff8247/ansible-post-provision) for full playbook documentation.
 
 ```bash
 # Inspect the inventory before running
 ansible-inventory -i inventory/ --graph
 
-# Linux — prompt for SSH password (requires sshpass on the control node)
-ansible-playbook -i inventory/ site.yml --ask-pass
-
-# Linux — prompt for SSH and sudo passwords (if sudo is not passwordless)
-ansible-playbook -i inventory/ site.yml --ask-pass --ask-become-pass
-
-# Windows post-provision — obtain a Kerberos ticket and set vCenter password first
+# Windows post-provision
 kinit svc-ansible@CORP.LOCAL
 export VMWARE_PASSWORD="your-vcenter-password"
-ansible-playbook -i inventory/ post_provision.yml
+ansible-playbook -i inventory/ post_provision_windows.yml
 
-# Mixed — target Linux and Windows separately
-ansible-playbook -i inventory/ site.yml --limit linux --ask-pass
-ansible-playbook -i inventory/ post_provision.yml --limit windows
-```
+# Linux post-provision (--ask-vault-pass required — CA certs are vault-encrypted)
+export VMWARE_PASSWORD="your-vcenter-password"
+export ANSIBLE_LINUX_PASSWORD="your-linux-password"
+export TF_VAR_windows_domain_password="your-domain-join-password"
+ansible-playbook -i inventory/ --ask-vault-pass post_provision_linux.yml
 
-For Linux non-interactive use, store credentials in an Ansible Vault file:
-
-```bash
-# Create and encrypt the vault file
-ansible-vault create vault.yml
-```
-
-```yaml
-# vault.yml contents
-ansible_password: "YourPassword"
-ansible_become_password: "YourPassword"   # if sudo requires a password
-```
-
-```bash
-ansible-playbook -i inventory/ site.yml --limit linux -e @vault.yml --vault-password-file ~/.vault_pass
+# Both OS types in one run
+kinit svc-ansible@CORP.LOCAL
+export VMWARE_PASSWORD="your-vcenter-password"
+export ANSIBLE_LINUX_PASSWORD="your-linux-password"
+export TF_VAR_windows_domain_password="your-domain-join-password"
+ansible-playbook -i inventory/ --ask-vault-pass site.yml
 ```
 
 ### Groups
@@ -161,7 +147,7 @@ ansible-playbook -i inventory/ site.yml --limit linux -e @vault.yml --vault-pass
 
 ### Connection Details
 
-**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Password supplied at runtime via `--ask-pass`.
+**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Also includes `realm_join_user` sourced from `windows_domain_user` for Ansible-driven AD domain join. SSH and sudo passwords are supplied via `ANSIBLE_LINUX_PASSWORD` env var at runtime.
 
 **Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using Kerberos transport by default. Authentication uses the active Kerberos ticket from `kinit` — no password flag needed at runtime. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates. Use `ntlm` transport for workgroup (non-domain) machines.
 
@@ -408,8 +394,8 @@ Linux domain join is handled by Ansible post-boot.
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `windows_domain` | `string` | `null` | AD domain to join (e.g. `corp.example.com`). `null` skips domain join |
-| `windows_domain_user` | `string` | `null` | AD user with machine join permissions |
-| `windows_domain_password` | `string` | `null` | Domain join password (sensitive) — set via `TF_VAR_windows_domain_password` |
+| `windows_domain_user` | `string` | `null` | AD user with machine join permissions — also written to `inventory/group_vars/linux.yml` as `realm_join_user` for Ansible-driven Linux domain join |
+| `windows_domain_password` | `string` | `null` | Domain join password (sensitive) — set via `TF_VAR_windows_domain_password`. Reused by Ansible for Linux realm join. |
 | `windows_domain_ou` | `string` | `null` | OU distinguished name for the computer object. `null` uses the default Computers container |
 | `windows_workgroup` | `string` | `"WORKGROUP"` | Workgroup name for Windows VMs when not domain-joined |
 
