@@ -147,7 +147,7 @@ ansible-playbook -i inventory/ --ask-vault-pass site.yml
 
 ### Connection Details
 
-**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Also includes `realm_join_user` sourced from `windows_domain_user` for Ansible-driven AD domain join. SSH and sudo passwords are supplied via `ANSIBLE_LINUX_PASSWORD` env var at runtime.
+**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Also includes `realm_join_user` sourced from `windows_domain_user`, `domain_site` for Satellite capsule selection, and `global_env_long` for activation key resolution. SSH and sudo passwords are supplied via `ANSIBLE_LINUX_PASSWORD` env var at runtime.
 
 **Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using Kerberos transport by default. Authentication uses the active Kerberos ticket from `kinit` — no password flag needed at runtime. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates. Use `ntlm` transport for workgroup (non-domain) machines.
 
@@ -169,6 +169,8 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `iso_folder` | `"ISOs/"` | Folder path within `iso_datastore` where the payload ISO is stored |
 | `iso_filename` | `null` | Filename of the payload ISO (e.g. `payload-2024.iso`) |
 | `vlan` | `null` | VLAN number for the Ansible NIC rename (e.g. `100` → `vNIC - VLAN 100`) |
+| `domain_site` | `null` | Site code for Satellite capsule selection — written to `group_vars/linux.yml` as `domain_site` (e.g. `sd1`, `bne`, `wa2`). Must match a `satellite_capsule_<site>` entry in `linux_common/vars/main.yml`. |
+| `satellite_content_view` | `null` | Satellite content view name — written to `group_vars/linux.yml` as `global_env_long` (e.g. `Production`, `Test`). Must match a `satellite_cv_<view>_rhel<N>` entry in `linux_common/vars/main.yml`. |
 
 ## Domain Join
 
