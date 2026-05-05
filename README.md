@@ -359,6 +359,8 @@ Per-VM `template_name` in the `vms` map overrides these globals, allowing indivi
 
 Disks with no `mount_point` (including the OS disk) are provisioned by Terraform but left untouched by Ansible. Only disks with `mount_point` set are initialised, partitioned, formatted, and assigned a drive letter or mount path during post-provisioning.
 
+To extend a disk after initial provisioning, increase its `size` in tfvars and re-run `terraform apply` (VMware resizes the VMDK online), then run `extend_disks_windows.yml` or `extend_disks_linux.yml` from the Ansible repo to grow the in-guest partition/filesystem without unmounting.
+
 #### NTFS Allocation Unit Size (Windows)
 
 The `windows_storage` Ansible role automatically selects the NTFS allocation unit size based on the disk `label`. Labels starting with any of the following words get **64 KB** blocks; all others get the standard **4 KB**:
