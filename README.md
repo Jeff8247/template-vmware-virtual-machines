@@ -396,6 +396,24 @@ After `terraform apply` + Ansible post-provisioning:
 - **T:** — NTFS, volume label "tempdb", 64 KB allocation units
 - **B:** — NTFS, volume label "backup", 64 KB allocation units
 
+**Example — Linux VM with data disk:**
+
+```hcl
+vms = {
+  "lnx-app-01" = {
+    is_windows = false
+    disks = [
+      { label = "OS",   size = 100, unit_number = 0 },
+      { label = "Data", size = 50,  unit_number = 1, mount_point = "/data" },
+    ]
+  }
+}
+```
+
+After `terraform apply` + Ansible post-provisioning, `/data` is mounted XFS with LVM layout:
+- PV: `/dev/sdb`, VG: `rhel_data`, LV: `data`
+- Mounted at `/data`, persisted to `/etc/fstab`
+
 ### Networking
 
 | Variable | Type | Default | Description |
