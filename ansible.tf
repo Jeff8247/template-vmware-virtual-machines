@@ -38,6 +38,15 @@ locals {
     }
   }
 
+  # Per-VM list of data disks that have a mount_point, with unit_number resolved
+  ansible_vm_data_disks = {
+    for k, v in var.vms : k => [
+      for idx, d in coalesce(v.disks, var.disks) :
+      merge(d, { unit_number = coalesce(d.unit_number, idx) })
+      if try(d.mount_point, null) != null
+    ]
+  }
+
   ansible_inventory = {
     all = {
       children = merge(
@@ -134,6 +143,10 @@ resource "local_file" "ansible_host_vars" {
     try(coalesce(each.value.windows_domain, var.windows_domain), null) != null &&
     try(coalesce(each.value.windows_domain_ou, var.windows_domain_ou), null) != null ? {
       windows_domain_ou = coalesce(each.value.windows_domain_ou, var.windows_domain_ou)
+    } : {},
+    # Data disk mount points — only when at least one disk has mount_point set
+    length(local.ansible_vm_data_disks[each.key]) > 0 ? {
+      data_disks = local.ansible_vm_data_disks[each.key]
     } : {}
   ))
   file_permission = "0640"

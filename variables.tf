@@ -65,6 +65,7 @@ variable "vms" {
       unit_number      = optional(number)
       thin_provisioned = optional(bool, false)
       eagerly_scrub    = optional(bool, false)
+      mount_point      = optional(string)
     })))
     scsi_type             = optional(string)
     scsi_controller_count = optional(number)
@@ -264,6 +265,7 @@ variable "disks" {
     unit_number      = optional(number)
     thin_provisioned = optional(bool, false)
     eagerly_scrub    = optional(bool, false)
+    mount_point      = optional(string)
   }))
   default = [
     {

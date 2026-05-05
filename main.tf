@@ -67,10 +67,14 @@ module "vm" {
   memory                 = coalesce(each.value.memory, var.memory)
   memory_hot_add_enabled = coalesce(each.value.memory_hot_add_enabled, var.memory_hot_add_enabled)
 
-  # Storage
-  disks = [for idx, d in coalesce(each.value.disks, var.disks) : merge(d, {
-    unit_number = coalesce(d.unit_number, idx)
-  })]
+  # Storage — mount_point is Ansible-only; project only module-compatible fields
+  disks = [for idx, d in coalesce(each.value.disks, var.disks) : {
+    label            = d.label
+    size             = d.size
+    unit_number      = coalesce(d.unit_number, idx)
+    thin_provisioned = d.thin_provisioned
+    eagerly_scrub    = d.eagerly_scrub
+  }]
   scsi_type             = coalesce(each.value.scsi_type, var.scsi_type)
   scsi_controller_count = coalesce(each.value.scsi_controller_count, var.scsi_controller_count)
 

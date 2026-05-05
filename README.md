@@ -153,7 +153,7 @@ ansible-playbook -i inventory/ --ask-vault-pass site.yml
 
 **vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`, and `iso_datastore_path` are sourced directly from `terraform.tfvars`. Playbooks can use these without any manual configuration. The vCenter password is never written to inventory — pass it as `VMWARE_PASSWORD` at playbook runtime.
 
-**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`.
+**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `data_disks` (Windows VMs with `mount_point` disks only).
 
 The `inventory/` directory is gitignored — it is always regenerated from Terraform state.
 
@@ -171,6 +171,9 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `vlan` | `null` | VLAN number for the Ansible NIC rename (e.g. `100` → `vNIC - VLAN 100`) |
 | `domain_site` | `null` | Site code for Satellite capsule selection — written to `group_vars/linux.yml` as `domain_site` (e.g. `sd1`, `bne`, `wa2`). Must match a `satellite_capsule_<site>` entry in `linux_common/vars/main.yml`. |
 | `satellite_content_view` | `null` | Satellite content view name — written to `group_vars/linux.yml` as `global_env_long` (e.g. `Production`, `Test`). Must match a `satellite_cv_<view>_rhel<N>` entry in `linux_common/vars/main.yml`. |
+| `windows_domain_netbios` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `group_vars/all.yml`. Required for Linux realm join. |
+| `sccm_management_point` | `null` | SCCM management point FQDN — written to `group_vars/all.yml` and used by `windows_common` to install the SCCM agent. |
+| `sccm_site_code` | `null` | SCCM site code (e.g. `A01`) — written to `group_vars/all.yml`. |
 
 ## Domain Join
 
@@ -345,13 +348,53 @@ Per-VM `template_name` in the `vms` map overrides these globals, allowing indivi
 
 ```hcl
 {
-  label            = "disk0"   # required — unique per VM
+  label            = "disk0"   # required — unique per VM; also used as NTFS volume label
   size             = 60        # required — size in GB
   unit_number      = 0         # optional — SCSI unit number
   thin_provisioned = true      # optional — default true
   eagerly_scrub    = false     # optional — default false
+  mount_point      = null      # optional — drive letter (Windows: "F") or mount path (Linux: "/data")
 }
 ```
+
+Disks with no `mount_point` (including the OS disk) are provisioned by Terraform but left untouched by Ansible. Only disks with `mount_point` set are initialised, partitioned, formatted, and assigned a drive letter or mount path during post-provisioning.
+
+#### NTFS Allocation Unit Size (Windows)
+
+The `windows_storage` Ansible role automatically selects the NTFS allocation unit size based on the disk `label`. Labels starting with any of the following words get **64 KB** blocks; all others get the standard **4 KB**:
+
+| Label prefix | Allocation unit | Reason |
+|---|---|---|
+| `database` | 64 KB | SQL Server data files (.mdf) — aligned to 64 KB extent writes |
+| `logs` | 64 KB | Transaction log files (.ldf) — SQL Server writes in sequential 60 KB chunks |
+| `tempdb` | 64 KB | tempdb data files — same write pattern as primary data files |
+| `backup` | 64 KB | Large sequential backup writes benefit from larger blocks |
+| *(anything else)* | 4 KB | General-purpose default |
+
+The prefix match is used, so `database`, `database2`, `database_prod` all resolve to 64 KB. The `label` value is also written as the NTFS volume label visible in Windows Explorer.
+
+**Example — SQL Server VM:**
+
+```hcl
+vms = {
+  "win-db-01" = {
+    is_windows = true
+    disks = [
+      { label = "disk0",    size = 80,  unit_number = 0 },
+      { label = "database", size = 500, unit_number = 1, mount_point = "D" },
+      { label = "logs",     size = 100, unit_number = 2, mount_point = "L" },
+      { label = "tempdb",   size = 100, unit_number = 3, mount_point = "T" },
+      { label = "backup",   size = 300, unit_number = 4, mount_point = "B" },
+    ]
+  }
+}
+```
+
+After `terraform apply` + Ansible post-provisioning:
+- **D:** — NTFS, volume label "database", 64 KB allocation units
+- **L:** — NTFS, volume label "logs", 64 KB allocation units
+- **T:** — NTFS, volume label "tempdb", 64 KB allocation units
+- **B:** — NTFS, volume label "backup", 64 KB allocation units
 
 ### Networking
 
@@ -401,7 +444,15 @@ Linux domain join is handled by Ansible post-boot.
 | `windows_domain_user` | `string` | `null` | AD user with machine join permissions — also written to `inventory/group_vars/linux.yml` as `realm_join_user` for Ansible-driven Linux domain join |
 | `windows_domain_password` | `string` | `null` | Domain join password (sensitive) — set via `TF_VAR_windows_domain_password`. Reused by Ansible for Linux realm join. |
 | `windows_domain_ou` | `string` | `null` | OU distinguished name for the computer object. `null` uses the default Computers container |
+| `windows_domain_netbios` | `string` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `inventory/group_vars/all.yml`. Required for Linux realm join via Ansible. |
 | `windows_workgroup` | `string` | `"WORKGROUP"` | Workgroup name for Windows VMs when not domain-joined |
+
+### SCCM
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `sccm_management_point` | `string` | `null` | FQDN of the SCCM management point (e.g. `sccm.corp.example.com`) — written to `inventory/group_vars/all.yml` and used by `windows_common` to install the SCCM agent |
+| `sccm_site_code` | `string` | `null` | SCCM site code (e.g. `A01`) — written to `inventory/group_vars/all.yml` |
 
 ### Windows-Only
 
