@@ -554,7 +554,7 @@ variable "domain_site" {
 }
 
 variable "satellite_content_view" {
-  description = "Satellite content view name used to resolve the activation key (e.g. Production, Test, Development). Written to inventory/group_vars/linux.yml as global_env_long."
+  description = "Deprecated — no longer written to Ansible inventory. Use deployment_environment instead."
   type        = string
   default     = null
 }
