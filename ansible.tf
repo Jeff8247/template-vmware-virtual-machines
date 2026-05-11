@@ -65,19 +65,22 @@ locals {
 # environment variable at playbook runtime.
 resource "local_file" "ansible_group_vars_all" {
   filename = "${path.root}/inventory/group_vars/all.yml"
-  content = yamlencode({
-    vcenter_fqdn           = var.vsphere_server
-    vcenter_username       = var.vsphere_user
-    vm_datacenter          = var.datacenter
-    vm_cluster             = var.cluster
-    iso_datastore_path     = "[${coalesce(var.iso_datastore, var.datastore)}] ${var.iso_folder}"
-    iso_filename           = var.iso_filename
-    vlan                   = var.vlan
-    windows_domain         = var.windows_domain
-    windows_domain_netbios = var.windows_domain_netbios
-    sccm_management_point  = var.sccm_management_point
-    sccm_site_code         = var.sccm_site_code
-  })
+  content = yamlencode(merge(
+    {
+      vcenter_fqdn           = var.vsphere_server
+      vcenter_username       = var.vsphere_user
+      vm_datacenter          = var.datacenter
+      vm_cluster             = var.cluster
+      iso_datastore_path     = "[${coalesce(var.iso_datastore, var.datastore)}] ${var.iso_folder}"
+      iso_filename           = var.iso_filename
+      vlan                   = var.vlan
+      windows_domain         = var.windows_domain
+      windows_domain_netbios = var.windows_domain_netbios
+      sccm_management_point  = var.sccm_management_point
+      sccm_site_code         = var.sccm_site_code
+    },
+    var.deployment_environment != null ? { deployment_environment = var.deployment_environment } : {}
+  ))
   file_permission = "0644"
 }
 

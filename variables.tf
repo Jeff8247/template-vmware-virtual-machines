@@ -558,3 +558,15 @@ variable "satellite_content_view" {
   type        = string
   default     = null
 }
+
+variable "deployment_environment" {
+  description = <<-EOT
+    Environment tier for this deployment. Written to inventory/group_vars/all.yml as deployment_environment
+    and consumed by provisioning tools that need to select environment-specific configuration (e.g. Dynatrace
+    tenant, future tools). This is independent of satellite_content_view — Satellite uses its own content view
+    naming; this variable reflects the infrastructure environment tier.
+    Valid values: Production | PreProduction | NonProduction
+  EOT
+  type        = string
+  default     = null
+}
