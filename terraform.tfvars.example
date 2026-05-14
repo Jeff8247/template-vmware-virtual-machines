@@ -69,7 +69,7 @@ sccm_management_point = "sccm.corp.example.com"
 sccm_site_code        = "A01"
 
 domain_site            = "sd1"          # Satellite capsule site code — must match a satellite_capsule_<site> var in linux_common/vars/main.yml
-satellite_content_view = "Production"   # Satellite content view — must match a satellite_cv_<view>_rhel<N> var in linux_common/vars/main.yml
+deployment_environment = "Production"   # Environment tier: Production | PreProduction | NonProduction
 
 # ansible_windows_user    = "svc-ansible@corp.example.com"   # domain service account (UPN format)
 # ansible_winrm_transport = "kerberos"                        # ntlm | kerberos | basic

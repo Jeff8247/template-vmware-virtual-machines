@@ -147,7 +147,7 @@ ansible-playbook -i inventory/ --ask-vault-pass site.yml
 
 ### Connection Details
 
-**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Also includes `realm_join_user` sourced from `windows_domain_user`, `domain_site` for Satellite capsule selection, and `global_env_long` for activation key resolution. SSH and sudo passwords are supplied via `ANSIBLE_LINUX_PASSWORD` env var at runtime.
+**Linux** (`group_vars/linux.yml`) — SSH on port 22 as `ansible_linux_user`, with `ansible_become: true` via sudo. Also includes `realm_join_user` sourced from `windows_domain_user` and `domain_site` for Satellite capsule selection. SSH and sudo passwords are supplied via `ANSIBLE_LINUX_PASSWORD` env var at runtime.
 
 **Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using Kerberos transport by default. Authentication uses the active Kerberos ticket from `kinit` — no password flag needed at runtime. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates. Use `ntlm` transport for workgroup (non-domain) machines.
 
@@ -170,7 +170,8 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `iso_filename` | `null` | Filename of the payload ISO (e.g. `payload-2024.iso`) |
 | `vlan` | `null` | VLAN number for the Ansible NIC rename (e.g. `100` → `vNIC - VLAN 100`) |
 | `domain_site` | `null` | Site code for Satellite capsule selection — written to `group_vars/linux.yml` as `domain_site` (e.g. `sd1`, `bne`, `wa2`). Must match a `satellite_capsule_<site>` entry in `linux_common/vars/main.yml`. |
-| `satellite_content_view` | `null` | Satellite content view name — written to `group_vars/linux.yml` as `global_env_long` (e.g. `Production`, `Test`). Must match a `satellite_cv_<view>_rhel<N>` entry in `linux_common/vars/main.yml`. |
+| `satellite_content_view` | `null` | **Deprecated** — no longer written to Ansible inventory. Use `deployment_environment` instead. |
+| `deployment_environment` | `null` | Environment tier written to `group_vars/all.yml` as `deployment_environment` for all hosts. Used by provisioning tools (e.g. Dynatrace) to select environment-specific config. Valid values: `Production`, `PreProduction`, `NonProduction`. |
 | `windows_domain_netbios` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `group_vars/all.yml`. Required for Linux realm join. |
 | `sccm_management_point` | `null` | SCCM management point FQDN — written to `group_vars/all.yml` and used by `windows_common` to install the SCCM agent. |
 | `sccm_site_code` | `null` | SCCM site code (e.g. `A01`) — written to `group_vars/all.yml`. |
