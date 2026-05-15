@@ -119,18 +119,18 @@ ansible-inventory -i inventory/ --graph
 
 # Windows post-provision
 kinit svc-ansible@CORP.LOCAL
-export VMWARE_PASSWORD="your-vcenter-password"
+export TF_VAR_vsphere_password="your-vcenter-password"
 ansible-playbook -i inventory/ post_provision_windows.yml
 
 # Linux post-provision (--ask-vault-pass required — CA certs are vault-encrypted)
-export VMWARE_PASSWORD="your-vcenter-password"
+export TF_VAR_vsphere_password="your-vcenter-password"
 export ANSIBLE_LINUX_PASSWORD="your-linux-password"
 export TF_VAR_windows_domain_password="your-domain-join-password"
 ansible-playbook -i inventory/ --ask-vault-pass post_provision_linux.yml
 
 # Both OS types in one run
 kinit svc-ansible@CORP.LOCAL
-export VMWARE_PASSWORD="your-vcenter-password"
+export TF_VAR_vsphere_password="your-vcenter-password"
 export ANSIBLE_LINUX_PASSWORD="your-linux-password"
 export TF_VAR_windows_domain_password="your-domain-join-password"
 ansible-playbook -i inventory/ --ask-vault-pass site.yml
@@ -151,7 +151,7 @@ ansible-playbook -i inventory/ --ask-vault-pass site.yml
 
 **Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using Kerberos transport by default. Authentication uses the active Kerberos ticket from `kinit` — no password flag needed at runtime. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates. Use `ntlm` transport for workgroup (non-domain) machines.
 
-**vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`, and `iso_datastore_path` are sourced directly from `terraform.tfvars`. Playbooks can use these without any manual configuration. The vCenter password is never written to inventory — pass it as `VMWARE_PASSWORD` at playbook runtime.
+**vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`, and `iso_datastore_path` are sourced directly from `terraform.tfvars`. Playbooks can use these without any manual configuration. The vCenter password is never written to inventory — pass it as `TF_VAR_vsphere_password` at playbook runtime.
 
 **Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `data_disks` (Windows VMs with `mount_point` disks only).
 

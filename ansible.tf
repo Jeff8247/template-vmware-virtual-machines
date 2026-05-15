@@ -61,8 +61,8 @@ locals {
 
 # ── inventory/group_vars/all.yml ─────────────────────────────────────────────
 # Sourced directly from terraform.tfvars — no manual editing needed.
-# The vCenter password is never written to disk; pass VMWARE_PASSWORD as an
-# environment variable at playbook runtime.
+# The vCenter password is never written to disk; pass TF_VAR_vsphere_password
+# as an environment variable at playbook runtime.
 resource "local_file" "ansible_group_vars_all" {
   filename = "${path.root}/inventory/group_vars/all.yml"
   content = yamlencode(merge(
