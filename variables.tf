@@ -536,15 +536,15 @@ variable "ansible_winrm_cert_validation" {
 }
 
 variable "sccm_management_point" {
-  description = "FQDN of the SCCM management point (e.g. sccm.corp.example.com)"
+  description = "FQDN of the SCCM management point."
   type        = string
-  default     = null
+  default     = "sccm.example.com"
 }
 
 variable "sccm_site_code" {
-  description = "SCCM site code (e.g. A01)"
+  description = "SCCM site code."
   type        = string
-  default     = null
+  default     = "A01"
 }
 
 variable "domain_site" {
