@@ -171,10 +171,10 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `vlan` | `null` | VLAN number for the Ansible NIC rename (e.g. `100` → `vNIC - VLAN 100`) |
 | `domain_site` | `null` | Site code for Satellite capsule selection — written to `group_vars/linux.yml` as `domain_site` (e.g. `sd1`, `bne`, `wa2`). Must match a `satellite_capsule_<site>` entry in `linux_common/vars/main.yml`. |
 | `satellite_content_view` | `null` | **Deprecated** — no longer written to Ansible inventory. Use `deployment_environment` instead. |
-| `deployment_environment` | `null` | Environment tier written to `group_vars/all.yml` as `deployment_environment` for all hosts. Used by provisioning tools (e.g. Dynatrace) to select environment-specific config. Valid values: `Production`, `PreProduction`, `NonProduction`. |
+| `deployment_environment` | `null` | Environment tier written to `group_vars/all.yml` as `deployment_environment` for all hosts. Used by provisioning tools (e.g. Dynatrace) to select environment-specific config. Valid values: `Production`, `PreProduction`, `NonProduction`, `Test`. |
 | `windows_domain_netbios` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `group_vars/all.yml`. Required for Linux realm join. |
-| `sccm_management_point` | `null` | SCCM management point FQDN — written to `group_vars/all.yml` and used by `windows_common` to install the SCCM agent. |
-| `sccm_site_code` | `null` | SCCM site code (e.g. `A01`) — written to `group_vars/all.yml`. |
+| `sccm_management_point` | `sccm.example.com` | SCCM management point FQDN — written to `group_vars/all.yml` and used by `windows_common` to install the SCCM agent. |
+| `sccm_site_code` | `A01` | SCCM site code — written to `group_vars/all.yml`. |
 
 ## Domain Join
 
@@ -472,8 +472,8 @@ Linux domain join is handled by Ansible post-boot.
 
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
-| `sccm_management_point` | `string` | `null` | FQDN of the SCCM management point (e.g. `sccm.corp.example.com`) — written to `inventory/group_vars/all.yml` and used by `windows_common` to install the SCCM agent |
-| `sccm_site_code` | `string` | `null` | SCCM site code (e.g. `A01`) — written to `inventory/group_vars/all.yml` |
+| `sccm_management_point` | `string` | `sccm.example.com` | FQDN of the SCCM management point — written to `inventory/group_vars/all.yml` and used by `windows_common` to install the SCCM agent |
+| `sccm_site_code` | `string` | `A01` | SCCM site code — written to `inventory/group_vars/all.yml` |
 
 ### Windows-Only
 
