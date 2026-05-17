@@ -535,18 +535,6 @@ variable "ansible_winrm_cert_validation" {
   }
 }
 
-variable "sccm_management_point" {
-  description = "FQDN of the SCCM management point."
-  type        = string
-  default     = "sccm.example.com"
-}
-
-variable "sccm_site_code" {
-  description = "SCCM site code."
-  type        = string
-  default     = "A01"
-}
-
 variable "domain_site" {
   description = "Site code used to select the Satellite capsule (e.g. sd1, bne, wa2). Written to inventory/group_vars/linux.yml as domain_site."
   type        = string

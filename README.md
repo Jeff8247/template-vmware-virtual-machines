@@ -114,26 +114,29 @@ IPs come from VMware Tools output (`default_ip_address`), so they reflect the ac
 Credentials are not stored in the inventory — pass them at runtime. See [`Jeff8247/ansible-post-provision`](https://github.com/Jeff8247/ansible-post-provision) for full playbook documentation.
 
 ```bash
+# Run from the ansible-post-provision checkout so its group_vars are loaded.
+cd ../ansible-post-provision
+
 # Inspect the inventory before running
-ansible-inventory -i inventory/ --graph
+ansible-inventory -i ../template-vmware-virtual-machines/inventory/ --graph
 
 # Windows post-provision
 kinit svc-ansible@CORP.LOCAL
 export TF_VAR_vsphere_password="your-vcenter-password"
-ansible-playbook -i inventory/ post_provision_windows.yml
+ansible-playbook -i ../template-vmware-virtual-machines/inventory/ post_provision_windows.yml
 
 # Linux post-provision (--ask-vault-pass required — CA certs are vault-encrypted)
 export TF_VAR_vsphere_password="your-vcenter-password"
 export ANSIBLE_LINUX_PASSWORD="your-linux-password"
 export TF_VAR_windows_domain_password="your-domain-join-password"
-ansible-playbook -i inventory/ --ask-vault-pass post_provision_linux.yml
+ansible-playbook -i ../template-vmware-virtual-machines/inventory/ --ask-vault-pass post_provision_linux.yml
 
 # Both OS types in one run
 kinit svc-ansible@CORP.LOCAL
 export TF_VAR_vsphere_password="your-vcenter-password"
 export ANSIBLE_LINUX_PASSWORD="your-linux-password"
 export TF_VAR_windows_domain_password="your-domain-join-password"
-ansible-playbook -i inventory/ --ask-vault-pass site.yml
+ansible-playbook -i ../template-vmware-virtual-machines/inventory/ --ask-vault-pass site.yml
 ```
 
 ### Groups
@@ -152,6 +155,8 @@ ansible-playbook -i inventory/ --ask-vault-pass site.yml
 **Windows** (`group_vars/windows.yml`) — WinRM on port 5985 as `ansible_windows_user`, using Kerberos transport by default. Authentication uses the active Kerberos ticket from `kinit` — no password flag needed at runtime. Switch to port 5986 with `ansible_winrm_cert_validation: validate` for production environments with proper certificates. Use `ntlm` transport for workgroup (non-domain) machines.
 
 **vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`, and `iso_datastore_path` are sourced directly from `terraform.tfvars`. Playbooks can use these without any manual configuration. The vCenter password is never written to inventory — pass it as `TF_VAR_vsphere_password` at playbook runtime.
+
+**SCCM variables** are fixed defaults in the Ansible post-provision roles, not in Terraform. The Windows post-provision roles use those Ansible vars to install the SCCM agent and manage SCCM collections.
 
 **Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `data_disks` (Windows VMs with `mount_point` disks only).
 
@@ -173,8 +178,6 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `satellite_content_view` | `null` | **Deprecated** — no longer written to Ansible inventory. Use `deployment_environment` instead. |
 | `deployment_environment` | `null` | Environment tier written to `group_vars/all.yml` as `deployment_environment` for all hosts. Used by provisioning tools (e.g. Dynatrace) to select environment-specific config. Valid values: `Production`, `PreProduction`, `NonProduction`, `Test`. |
 | `windows_domain_netbios` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `group_vars/all.yml`. Required for Linux realm join. |
-| `sccm_management_point` | `sccm.example.com` | SCCM management point FQDN — written to `group_vars/all.yml` and used by `windows_common` to install the SCCM agent. |
-| `sccm_site_code` | `A01` | SCCM site code — written to `group_vars/all.yml`. |
 
 ## Domain Join
 
@@ -467,13 +470,6 @@ Linux domain join is handled by Ansible post-boot.
 | `windows_domain_ou` | `string` | `null` | OU distinguished name for the computer object. `null` uses the default Computers container |
 | `windows_domain_netbios` | `string` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `inventory/group_vars/all.yml`. Required for Linux realm join via Ansible. |
 | `windows_workgroup` | `string` | `"WORKGROUP"` | Workgroup name for Windows VMs when not domain-joined |
-
-### SCCM
-
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `sccm_management_point` | `string` | `sccm.example.com` | FQDN of the SCCM management point — written to `inventory/group_vars/all.yml` and used by `windows_common` to install the SCCM agent |
-| `sccm_site_code` | `string` | `A01` | SCCM site code — written to `inventory/group_vars/all.yml` |
 
 ### Windows-Only
 
