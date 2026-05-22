@@ -158,7 +158,7 @@ ansible-playbook -i ../template-vmware-virtual-machines/inventory/ --ask-vault-p
 
 **SCCM variables** are fixed defaults in the Ansible post-provision roles, not in Terraform. The Windows post-provision roles use those Ansible vars to install the SCCM agent and manage SCCM collections.
 
-**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `data_disks` (Windows VMs with `mount_point` disks only).
+**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `lsa_members`, `data_disks` (Windows VMs with `mount_point` disks only).
 
 The `inventory/` directory is gitignored — it is always regenerated from Terraform state.
 
@@ -178,6 +178,7 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `satellite_content_view` | `null` | **Deprecated** — no longer written to Ansible inventory. Use `deployment_environment` instead. |
 | `deployment_environment` | `null` | Environment tier written to `group_vars/all.yml` as `deployment_environment` for all hosts. Used by provisioning tools (e.g. Dynatrace) to select environment-specific config. Valid values: `Production`, `PreProduction`, `NonProduction`, `Test`. |
 | `windows_domain_netbios` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `group_vars/all.yml`. Required for Linux realm join. |
+| `vms.<name>.lsa_members` | `null` | Per-VM list of AD users or groups to add to the VM's `DG-SA-<VM>-LSA` local administrators group during Ansible post-provisioning. |
 
 ## Domain Join
 

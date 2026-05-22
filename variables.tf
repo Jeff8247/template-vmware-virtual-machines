@@ -102,6 +102,9 @@ variable "vms" {
     windows_auto_logon_count = optional(number)
     windows_run_once         = optional(list(string))
 
+    # Ansible post-provisioning
+    lsa_members = optional(list(string))
+
     # Hardware (common)
     firmware                    = optional(string)
     hardware_version            = optional(number)

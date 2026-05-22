@@ -144,6 +144,10 @@ resource "local_file" "ansible_host_vars" {
     try(coalesce(each.value.windows_domain_ou, var.windows_domain_ou), null) != null ? {
       windows_domain_ou = coalesce(each.value.windows_domain_ou, var.windows_domain_ou)
     } : {},
+    # LSA group members — optional Ansible post-provisioning input
+    try(length(each.value.lsa_members), 0) > 0 ? {
+      lsa_members = each.value.lsa_members
+    } : {},
     # Data disk mount points — only when at least one disk has mount_point set
     length(local.ansible_vm_data_disks[each.key]) > 0 ? {
       data_disks = local.ansible_vm_data_disks[each.key]

@@ -123,6 +123,7 @@ vms = {
 
     windows_domain    = "corp.example.com"
     windows_domain_ou = "OU=AppServers,OU=Servers,DC=corp,DC=example,DC=com"
+    lsa_members       = ["DG-App-Team-Admins", "DG-Platform-Ops"]
     windows_run_once  = ["powershell.exe -Command \"Install-WindowsFeature Web-Server\""]
     time_zone_windows = 260
   }

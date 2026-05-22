@@ -70,6 +70,7 @@ vms = {
     ]
     ip_settings  = [{ ipv4_address = "10.0.1.101", ipv4_netmask = 24 }]
     ipv4_gateway = "10.0.1.1"
+    lsa_members  = ["DG-App-Team-Admins"]
   }
 
 }
