@@ -156,9 +156,9 @@ ansible-playbook -i ../template-vmware-virtual-machines/inventory/ --ask-vault-p
 
 **vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`, and `iso_datastore_path` are sourced directly from `terraform.tfvars`. Playbooks can use these without any manual configuration. The vCenter password is never written to inventory — pass it as `TF_VAR_vsphere_password` at playbook runtime.
 
-**SCCM variables** are fixed defaults in the Ansible post-provision roles, not in Terraform. The Windows post-provision roles use those Ansible vars to install the SCCM agent and manage SCCM collections.
+**SCCM defaults** such as site code and management point are fixed defaults in the Ansible post-provision roles. Per-VM SCCM collection membership can be set with `mw_sccm` and `sccm_device_collections`.
 
-**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `lsa_members`, `data_disks` (Windows VMs with `mount_point` disks only).
+**Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `lsa_members`, `lsu_members`, `mw_adgroup`, `mw_sccm`, `sccm_device_collections`, `gp_exceptions`, `data_disks` (Windows VMs with `mount_point` disks only).
 
 The `inventory/` directory is gitignored — it is always regenerated from Terraform state.
 
@@ -179,6 +179,11 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `deployment_environment` | `null` | Environment tier written to `group_vars/all.yml` as `deployment_environment` for all hosts. Used by provisioning tools (e.g. Dynatrace) to select environment-specific config. Valid values: `Production`, `PreProduction`, `NonProduction`, `Test`. |
 | `windows_domain_netbios` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `group_vars/all.yml`. Required for Linux realm join. |
 | `vms.<name>.lsa_members` | `null` | Per-VM list of AD users or groups to add to the VM's `DG-SA-<VM>-LSA` local administrators group during Ansible post-provisioning. |
+| `vms.<name>.lsu_members` | `null` | Per-VM list of AD users or groups to add to the VM's `DG-SA-<VM>-LSU` remote desktop users group during Ansible post-provisioning. |
+| `vms.<name>.mw_adgroup` | `null` | AD group name to add the VM computer account (`<VM>$`) to for maintenance window targeting. |
+| `vms.<name>.mw_sccm` | `null` | SCCM device collection name to add the VM to for maintenance window targeting. |
+| `vms.<name>.sccm_device_collections` | `null` | Additional SCCM device collection names to add the VM to during Ansible post-provisioning. |
+| `vms.<name>.gp_exceptions` | `null` | AD group names to add the VM computer account (`<VM>$`) to for Group Policy exceptions. |
 
 ## Domain Join
 

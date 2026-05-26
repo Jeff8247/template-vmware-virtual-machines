@@ -144,9 +144,24 @@ resource "local_file" "ansible_host_vars" {
     try(coalesce(each.value.windows_domain_ou, var.windows_domain_ou), null) != null ? {
       windows_domain_ou = coalesce(each.value.windows_domain_ou, var.windows_domain_ou)
     } : {},
-    # LSA group members — optional Ansible post-provisioning input
+    # AD, local access, maintenance window, and SCCM inputs — optional Ansible post-provisioning inputs
     try(length(each.value.lsa_members), 0) > 0 ? {
       lsa_members = each.value.lsa_members
+    } : {},
+    try(length(each.value.lsu_members), 0) > 0 ? {
+      lsu_members = each.value.lsu_members
+    } : {},
+    try(each.value.mw_adgroup, null) != null ? {
+      mw_adgroup = each.value.mw_adgroup
+    } : {},
+    try(each.value.mw_sccm, null) != null ? {
+      mw_sccm = each.value.mw_sccm
+    } : {},
+    try(length(each.value.sccm_device_collections), 0) > 0 ? {
+      sccm_device_collections = each.value.sccm_device_collections
+    } : {},
+    try(length(each.value.gp_exceptions), 0) > 0 ? {
+      gp_exceptions = each.value.gp_exceptions
     } : {},
     # Data disk mount points — only when at least one disk has mount_point set
     length(local.ansible_vm_data_disks[each.key]) > 0 ? {

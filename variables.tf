@@ -103,7 +103,12 @@ variable "vms" {
     windows_run_once         = optional(list(string))
 
     # Ansible post-provisioning
-    lsa_members = optional(list(string))
+    lsa_members             = optional(list(string))
+    lsu_members             = optional(list(string))
+    mw_adgroup              = optional(string)
+    mw_sccm                 = optional(string)
+    sccm_device_collections = optional(list(string))
+    gp_exceptions           = optional(list(string))
 
     # Hardware (common)
     firmware                    = optional(string)
