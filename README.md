@@ -156,7 +156,7 @@ ansible-playbook -i ../template-vmware-virtual-machines/inventory/ --ask-vault-p
 
 **vCenter variables** (`group_vars/all.yml`) — `vcenter_fqdn`, `vcenter_username`, `vm_datacenter`, `vm_cluster`, and `iso_datastore_path` are sourced directly from `terraform.tfvars`. Playbooks can use these without any manual configuration. The vCenter password is never written to inventory — pass it as `TF_VAR_vsphere_password` at playbook runtime.
 
-**Maintenance windows** are normally managed by adding the VM computer account (`<VM>$`) to an AD group with `mw_adgroup`. SCCM then picks up that AD group membership through its normal discovery/query collection process. Direct SCCM collection fields (`mw_sccm` and `sccm_device_collections`) are available only for environments that need explicit SCCM collection membership.
+**Maintenance windows** are normally managed by adding the VM computer account (`<computer_name>$`) to an AD group with `mw_adgroup`. SCCM then picks up that AD group membership through its normal discovery/query collection process. Direct SCCM collection fields (`mw_sccm` and `sccm_device_collections`) are available only for environments that need explicit SCCM collection membership.
 
 **Per-host variables** (`host_vars/<vm>.yml`) contain only what differs between hosts: `ansible_host`, `computer_name`, `vm_uuid`, and when set: `domain`, `windows_domain`, `windows_domain_ou`, `lsa_members`, `lsu_members`, `mw_adgroup`, `mw_sccm`, `sccm_device_collections`, `gp_exceptions`, `data_disks` (Windows VMs with `mount_point` disks only).
 
@@ -178,12 +178,12 @@ The `inventory/` directory is gitignored — it is always regenerated from Terra
 | `satellite_content_view` | `null` | **Deprecated** — no longer written to Ansible inventory. Use `deployment_environment` instead. |
 | `deployment_environment` | `null` | Environment tier written to `group_vars/all.yml` as `deployment_environment` for all hosts. Used by provisioning tools (e.g. Dynatrace) to select environment-specific config. Valid values: `Production`, `PreProduction`, `NonProduction`, `Test`. |
 | `windows_domain_netbios` | `null` | NetBIOS (short) domain name (e.g. `CORP`) — written to `group_vars/all.yml`. Required for Linux realm join. |
-| `vms.<name>.lsa_members` | `null` | Per-VM list of AD users or groups to add to the VM's `DG-SA-<VM>-LSA` local administrators group during Ansible post-provisioning. |
-| `vms.<name>.lsu_members` | `null` | Per-VM list of AD users or groups to add to the VM's `DG-SA-<VM>-LSU` remote desktop users group during Ansible post-provisioning. |
-| `vms.<name>.mw_adgroup` | `null` | Primary maintenance-window setting. Adds the VM computer account (`<VM>$`) to this AD group; SCCM can then target the server from AD group membership. |
+| `vms.<name>.lsa_members` | `null` | Per-VM list of AD users or groups to add to the VM's `DG-SA-<computer_name>-LSA` local administrators group during Ansible post-provisioning. |
+| `vms.<name>.lsu_members` | `null` | Per-VM list of AD users or groups to add to the VM's `DG-SA-<computer_name>-LSU` remote desktop users group during Ansible post-provisioning. |
+| `vms.<name>.mw_adgroup` | `null` | Primary maintenance-window setting. Adds the VM computer account (`<computer_name>$`) to this AD group; SCCM can then target the server from AD group membership. |
 | `vms.<name>.mw_sccm` | `null` | Optional direct SCCM device collection name. Leave unset when SCCM maintenance windows are driven from `mw_adgroup`. |
 | `vms.<name>.sccm_device_collections` | `null` | Optional additional direct SCCM device collection names. Leave unset unless explicit SCCM collection membership is required. |
-| `vms.<name>.gp_exceptions` | `null` | AD group names to add the VM computer account (`<VM>$`) to for Group Policy exceptions. |
+| `vms.<name>.gp_exceptions` | `null` | AD group names to add the VM computer account (`<computer_name>$`) to for Group Policy exceptions. |
 
 ## Domain Join
 
