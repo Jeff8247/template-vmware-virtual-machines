@@ -73,7 +73,6 @@ vms = {
     lsa_members  = ["DG-App-Team-Admins"]
     lsu_members  = ["DG-App-Team-RemoteUsers"]
     mw_adgroup   = "DG-MW-Windows-Sunday-0200"
-    mw_sccm      = "MW - Windows - Sunday 0200"
   }
 
 }

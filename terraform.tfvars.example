@@ -126,10 +126,6 @@ vms = {
     lsa_members             = ["DG-App-Team-Admins", "DG-Platform-Ops"]
     lsu_members             = ["DG-App-Team-RemoteUsers"]
     mw_adgroup              = "DG-MW-Windows-Sunday-0200"
-    mw_sccm                 = "MW - Windows - Sunday 0200"
-    sccm_device_collections = [
-      "Windows Servers - Application Tier"
-    ]
     gp_exceptions = [
       "DG-GPO-Exception-AppServers"
     ]
