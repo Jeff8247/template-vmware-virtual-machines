@@ -127,7 +127,11 @@ resource "local_file" "ansible_host_vars" {
   content = yamlencode(merge(
     # Per-host identity — always present
     {
-      ansible_host  = module.vm[each.key].default_ip_address
+      ansible_host = each.value.is_windows && try(coalesce(each.value.windows_domain, var.windows_domain), null) != null ? format(
+        "%s.%s",
+        local.vms_resolved[each.key].computer_name,
+        coalesce(each.value.windows_domain, var.windows_domain)
+      ) : module.vm[each.key].default_ip_address
       computer_name = local.vms_resolved[each.key].computer_name
       vm_uuid       = module.vm[each.key].uuid
     },
